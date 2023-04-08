@@ -15,7 +15,7 @@ app.engine("hbs", exphbs.engine({
 
 app.use(express.static('public'));
 
-const mysql = require('mysql2/promise');
+const mysql = require('mysql2');
 
 const con0Config = {
     host: 'ccscloud3.dlsu.edu.ph',
@@ -38,76 +38,54 @@ const con2Config = {
     password: '12341234'
 }
 
+const pool = mysql.createPool(con0Config);
+
+getList = () => {
+    var query = "SELECT * FROM imdb.movies LIMIT 30;";
+
+    return new Promise((resolve, reject) => {
+        pool.query(query, (error, results) => {
+            if(error) return reject(error);
+
+            return resolve(results);
+        })
+    })
+}
+
 app.get('/', async function (req, res) {
-    //   res.sendFile(path.join(__dirname, '/index.html'));
-    var query = "SELECT * FROM imdb.movies LIMIT 30;"
-
-    var con = await mysql.createConnection(con0Config);
-
-    const [results, fields] = await con.query(query);
-    console.log(results);
-    await res.render('index', {tuple: results});
+    try {
+        const results = await getList();
+        res.render('index', { tuple: results});
+    }
+    catch(error) {
+        console.log(error);
+    }
 });
 
+updateRank = () => {
+    var query = "UPDATE imdb.movies SET `rank` = 23 WHERE id = 0;";
+
+    return new Promise((resolve, reject) => {
+        pool.query(query, (error, results) => {
+            if(error) return reject(error);
+
+            return resolve(results); 
+        })
+    })
+}
+
 app.get('/transaction', async function (req, res) {
-
-    var query =
-        "UPDATE imdb.movies " +
-        "SET `rank` = 5 " +
-        "WHERE id = 0;";
-
-    var con = await mysql.createConnection(con0Config);
-
-    await con.execute("SET AUTOCOMMIT = 0;");
-
-    await con.beginTransaction();
-
     try {
-        await con.execute(query);
-        await res.redirect("/");
-    } catch (err) {
-        console.error(`Error occurred while creating order: ${err.message}`, err);
-        con.rollback();
-        console.info('Rollback successful');
-        return 'error creating order';
+        await updateRank();
+        res.redirect('/')
     }
-
-
+    catch(error) {
+        console.log(error)
+    }
 });
 
 app.get('/rollback', async function (req, res) {
-    var con = await mysql.createConnection(con0Config);
-    await con.rollback();
-    res.redirect("/");
-});
-
-app.get('/1', function (req, res) {
-    //   res.sendFile(path.join(__dirname, '/index.html'));
-
-    var con = mysql.createConnection(con1Config);
-
-    var query = "SELECT * FROM imdb.movies LIMIT 30;"
-    con.query(query, function (error, results, fields) {
-        if (error) throw error;
-        console.log(results);
-        // connected!
-
-        res.render('index', { tuple: results });
-    });
-});
-
-app.get('/2', function (req, res) {
-    //   res.sendFile(path.join(__dirname, '/index.html'));
-    var con = mysql.createConnection(con2Config);
-
-    var query = "SELECT * FROM imdb.movies LIMIT 30;"
-    con.query(query, function (error, results, fields) {
-        if (error) throw error;
-        console.log(results);
-        // connected!
-
-        res.render('index', { tuple: results });
-    });
+    res.redirect('/');
 });
 
 app.listen(port, () => {
