@@ -76,6 +76,34 @@ app.get('/', function (req, res) {
     });
 });
 
+app.get('/transaction', function(req, res) {
+
+    var query =
+        "UPDATE imdb.movies " +
+        "SET `rank` = 5 " +
+        "WHERE id = 0;";
+
+    con0.execute("SET AUTOCOMMIT = 0;");
+
+    con0.beginTransaction();
+
+    try {
+        con0.execute(query);
+        res.redirect("/");
+    } 
+    catch(err) {
+        console.error(`Error occurred while creating order: ${err.message}`, err);
+        con0.rollback();
+        console.info('Rollback successful');
+    }
+
+})
+
+app.get('/rollback', function(req, res) {
+    con0.rollback();
+    res.redirect("/");
+});
+
 app.get('/1', function (req, res) {
     //   res.sendFile(path.join(__dirname, '/index.html'));
     var query = "SELECT * FROM imdb.movies LIMIT 30;"
