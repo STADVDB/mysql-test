@@ -16,7 +16,7 @@ app.engine("hbs", exphbs.engine({
 app.use(express.static('public'));
 
 const mysql = require('mysql2');
-var con0 = mysql.createConnection({
+var con0 = mysql.createPool({
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39000',
     user: 'dev',
@@ -37,14 +37,14 @@ var con2 = mysql.createConnection({
     password: '12341234'
 });
 
-con0.connect(function (err) {
-    if (err) {
-        console.error('error connecting: ' + err.stack);
-        return;
-    }
+// con0.connect(function (err) {
+//     if (err) {
+//         console.error('error connecting: ' + err.stack);
+//         return;
+//     }
 
-    console.log('connected as id ' + con0.threadId);
-});
+//     console.log('connected as id ' + con0.threadId);
+// });
 
 con1.connect(function (err) {
     if (err) {
@@ -83,25 +83,35 @@ app.get('/transaction', function(req, res) {
         "SET `rank` = 23 " +
         "WHERE id = 0;";
 
-    con0.execute("SET AUTOCOMMIT = 0;");
+    con0.getConnection(function (error, connection) {
 
-    con0.beginTransaction();
+        connection.execute("SET AUTOCOMMIT = 0;");
 
-    try {
-        con0.execute(query);
-        res.redirect("/");
-    } 
-    catch(err) {
-        console.error(`Error occurred while creating order: ${err.message}`, err);
-        con0.rollback();
-        console.info('Rollback successful');
-    }
+        connection.beginTransaction();
+
+        try {
+            connection.execute(query);
+            res.redirect("/");
+        }
+        catch (err) {
+            console.error(`Error occurred while creating order: ${err.message}`, err);
+            connection.rollback();
+            console.info('Rollback successful');
+        }
+
+        con0.releaseConnection(connection);
+
+    });
 
 })
 
 app.get('/rollback', function(req, res) {
-    con0.rollback();
-    res.redirect("/");
+    con0.getConnection(function(error, connection) {
+        connection.rollback();
+        con0.releaseConnection(connection);
+
+        res.redirect("/");
+    })
 });
 
 app.get('/1', function (req, res) {
