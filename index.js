@@ -80,7 +80,7 @@ app.get('/transaction', function(req, res) {
 
     var query =
         "UPDATE imdb.movies " +
-        "SET `rank` = 5 " +
+        "SET `rank` = 23 " +
         "WHERE id = 0;";
 
     con0.execute("SET AUTOCOMMIT = 0;");
