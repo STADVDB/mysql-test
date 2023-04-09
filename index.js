@@ -66,16 +66,22 @@ updateRank = () => {
     var query = "UPDATE imdb.movies SET `rank` = 23 WHERE id = 0;";
 
     return new Promise((resolve, reject) => {
-        var connection = pool.getConnection();
+        pool.getConnection(function(error, connection) {
+            connection.beginTransaction(function(err) {
+                if(err) return reject(err);
 
-        connection.beginTransaction(function() {
-            
-        })
-        pool.query(query, (error, results) => {
-            if(error) return reject(error);
-
-            return resolve(results); 
-        })
+                connection.execute("SET AUTOCOMMIT=0");
+                connection.execute(query, (error) => {
+                    if (error) {
+                        connection.rollback();
+                        return reject(error);
+                    }
+                    return resolve();
+                });
+            });
+            pool.releaseConnection(connection);
+            console.log("connection released");
+        });
     })
 }
 
@@ -89,7 +95,11 @@ app.get('/transaction', async function (req, res) {
     }
 });
 
-app.get('/rollback', async function (req, res) {
+app.get('/rollback', function (req, res) {
+    pool.getConnection(function(error, connection) {
+        connection.rollback();
+        pool.releaseConnection(connection);
+    })
     res.redirect('/');
 });
 
