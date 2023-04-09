@@ -16,7 +16,7 @@ app.engine("hbs", exphbs.engine({
 app.use(express.static('public'));
 
 const mysql = require('mysql2');
-var con0 = mysql.createPool({
+var pool0 = mysql.createPool({
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39000',
     user: 'dev',
@@ -67,7 +67,7 @@ con2.connect(function (err) {
 app.get('/', function (req, res) {
     //   res.sendFile(path.join(__dirname, '/index.html'));
     var query = "SELECT * FROM imdb.movies LIMIT 30;"
-    con0.query(query, function (error, results, fields) {
+    pool0.query(query, function (error, results, fields) {
         if (error) throw error;
         console.log(results);
         // connected!
@@ -76,16 +76,18 @@ app.get('/', function (req, res) {
     });
 });
 
-app.get('/transaction', function(req, res) {
+// testing transactions 
+app.get('/transaction', function (req, res) {
 
     var query =
         "UPDATE imdb.movies " +
         "SET `rank` = 23 " +
         "WHERE id = 0;";
 
-    con0.getConnection(function (error, connection) {
+    pool0.getConnection(function (error, connection) {
 
-        connection.execute("SET AUTOCOMMIT = 0;");
+        connection.execute("SET AUTOCOMMIT = 0;"); 
+        // connection.execute("SET ISOLATION LEVEL READ UNCOMMITTED");
 
         connection.beginTransaction();
 
@@ -99,16 +101,17 @@ app.get('/transaction', function(req, res) {
             console.info('Rollback successful');
         }
 
-        con0.releaseConnection(connection);
+        pool0.releaseConnection(connection);
+        console.log("Connection released");
 
     });
 
 })
 
-app.get('/rollback', function(req, res) {
-    con0.getConnection(function(error, connection) {
+app.get('/rollback', function (req, res) {
+    pool0.getConnection(function (error, connection) {
         connection.rollback();
-        con0.releaseConnection(connection);
+        pool0.releaseConnection(connection);
 
         res.redirect("/");
     })
