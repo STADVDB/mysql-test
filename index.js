@@ -66,6 +66,11 @@ updateRank = () => {
     var query = "UPDATE imdb.movies SET `rank` = 23 WHERE id = 0;";
 
     return new Promise((resolve, reject) => {
+        var connection = pool.getConnection();
+
+        connection.beginTransaction(function() {
+            
+        })
         pool.query(query, (error, results) => {
             if(error) return reject(error);
 
