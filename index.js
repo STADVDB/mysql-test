@@ -17,7 +17,7 @@ app.use(express.static('public'));
 
 const mysql = require('mysql2');
 
-const con0Config = {
+const con1Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39000',
     user: 'dev',
@@ -25,7 +25,7 @@ const con0Config = {
     database: 'imdb'
 }
 
-const con1Config = {
+const con2Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39001',
     user: 'dev',
@@ -33,7 +33,7 @@ const con1Config = {
     database: 'imdb'
 }
 
-const con2Config = {
+const con3Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39002',
     user: 'dev',
@@ -41,13 +41,15 @@ const con2Config = {
     database: 'imdb'
 }
 
-const pool = mysql.createPool(con0Config);
+const pool1 = mysql.createPool(con1Config);
+const pool2 = mysql.createPool(con2Config);
+const pool3 = mysql.createPool(con3Config);
 
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
 
     return new Promise((resolve, reject) => {
-        pool.query(query, (error, results) => {
+        pool1.query(query, (error, results) => {
             if(error) return reject(error);
 
             return resolve(results);
@@ -69,7 +71,7 @@ updateRank = () => {
     var query = "UPDATE movies SET `rank` = 23 WHERE id = 0;";
 
     return new Promise((resolve, reject) => {
-        pool.getConnection(function(error, connection) {
+        pool1.getConnection(function(error, connection) {
             connection.beginTransaction(function(err) {
                 if(err) return reject(err);
 
@@ -82,7 +84,7 @@ updateRank = () => {
                     return resolve();
                 });
             });
-            pool.releaseConnection(connection);
+            pool1.releaseConnection(connection);
             console.log("connection released");
         });
     })
@@ -99,9 +101,9 @@ app.get('/transaction', async function (req, res) {
 });
 
 app.get('/rollback', function (req, res) {
-    pool.getConnection(function(error, connection) {
+    pool1.getConnection(function(error, connection) {
         connection.rollback();
-        pool.releaseConnection(connection);
+        pool1.releaseConnection(connection);
     })
     res.redirect('/');
 });
