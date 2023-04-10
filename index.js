@@ -21,27 +21,30 @@ const con0Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39000',
     user: 'dev',
-    password: '12341234'
+    password: '12341234',
+    database: 'imdb'
 }
 
 const con1Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39001',
     user: 'dev',
-    password: '12341234'
+    password: '12341234',
+    database: 'imdb'
 }
 
 const con2Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39002',
     user: 'dev',
-    password: '12341234'
+    password: '12341234',
+    database: 'imdb'
 }
 
 const pool = mysql.createPool(con0Config);
 
 getList = () => {
-    var query = "SELECT * FROM imdb.movies LIMIT 30;";
+    var query = "SELECT * FROM movies LIMIT 30;";
 
     return new Promise((resolve, reject) => {
         pool.query(query, (error, results) => {
@@ -63,7 +66,7 @@ app.get('/', async function (req, res) {
 });
 
 updateRank = () => {
-    var query = "UPDATE imdb.movies SET `rank` = 23 WHERE id = 0;";
+    var query = "UPDATE movies SET `rank` = 23 WHERE id = 0;";
 
     return new Promise((resolve, reject) => {
         pool.getConnection(function(error, connection) {
