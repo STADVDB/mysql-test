@@ -51,14 +51,43 @@ function getPool(input) {
     return pool1; 
 }
 
+// TODO: convert to bluebird syntax for this (promise wrapper)
 getById = (node, isolationLevel, id) => {
     var query = "SELECT * FROM movies WHERE id = ?";
     var pool = getPool(node); 
 
     return new Promise((resolve, reject) => {
-        
-    })
+        pool.getConnection(function(error, connection) {
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel); 
+            connection.beginTransaction(function(error) {
+                if(error) return reject(error); 
+
+                connection.execute(query, [id], function(error, results) {
+                    if(error) return reject(error);
+
+                    console.log("Showing result: " + results);
+                    connection.execute("COMMIT;");
+                    return resolve(results);
+                });
+                pool.releaseConnection(connection); 
+                console.log("Connection released");
+            });
+        });
+    });
 }
+
+app.get('/search', async function(req, res) {
+    var id = req.query.id;
+    var isolationLevel = req.query.isolationLevel;
+    var pool = getPool(req.query.pool);
+
+    try {
+        const result = await searchById(pool, isolationLevel, id);
+        res.render('search', { tuple: result });
+    } catch (error) {
+        console.log(error);
+    }
+});
 
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
