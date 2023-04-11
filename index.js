@@ -45,6 +45,12 @@ const pool1 = mysql.createPool(con1Config);
 const pool2 = mysql.createPool(con2Config);
 const pool3 = mysql.createPool(con3Config);
 
+function getPool(input) {
+    if(input = 2) return pool2;
+    if(input = 3) return pool3; 
+    return pool1; 
+}
+
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
 
