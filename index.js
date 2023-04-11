@@ -52,9 +52,8 @@ function getPool(input) {
 }
 
 // TODO: convert to bluebird syntax for this (promise wrapper)
-getById = (node, isolationLevel, id) => {
+getById = (pool, isolationLevel, id) => {
     var query = "SELECT * FROM movies WHERE id = ?";
-    var pool = getPool(node); 
 
     return new Promise((resolve, reject) => {
         pool.getConnection(function(error, connection) {
