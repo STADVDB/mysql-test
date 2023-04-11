@@ -51,6 +51,15 @@ function getPool(input) {
     return pool1; 
 }
 
+getById = (node, isolationLevel, id) => {
+    var query = "SELECT * FROM movies WHERE id = ?";
+    var pool = getPool(node); 
+
+    return new Promise((resolve, reject) => {
+        
+    })
+}
+
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
 
