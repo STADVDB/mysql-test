@@ -46,12 +46,32 @@ const pool2 = mysql.createPool(con2Config);
 const pool3 = mysql.createPool(con3Config);
 
 function getPool(input) {
-    if(input = 2) return pool2;
-    if(input = 3) return pool3; 
+    if(input = 2) {
+        // verify that a connection can be made to node 2
+        pool2.getConnection(function(error, connection) {
+            if(error) {
+                console.log("Could not connect to node 2, redirecting connection to node 1");
+                return pool1;
+            }
+
+            return pool2; 
+        })
+    } 
+    if(input = 3) {
+        pool2.getConnection(function (error, connection) {
+            if (error) {
+                console.log("Could not connect to node 3, redirecting connection to node 1");
+                return pool1;
+            }
+
+            return pool3;
+        }) 
+    }
     return pool1; 
 }
 
 // TODO: convert to bluebird syntax for this (promise wrapper)
+// also add locking stuff 
 getById = (pool, isolationLevel, id) => {
     var query = "SELECT * FROM movies WHERE id = ?";
 
