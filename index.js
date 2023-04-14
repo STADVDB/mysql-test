@@ -45,119 +45,172 @@ const pool1 = mysql.createPool(con1Config);
 const pool2 = mysql.createPool(con2Config);
 const pool3 = mysql.createPool(con3Config);
 
-function getPool(input) {
+getPool = (input) => {
+    var pool;
+
     if (input == 3) {
-        pool3.getConnection(function (error, connection) {
-            if (error) {
-                console.log("Could not connect to node 3, redirecting connection to node 1");
-                return pool1;
-            }
-            console.log("Successful connection to node 3");
-            return pool3;
-        })
+        pool = pool3;
     }
-    if (input == 2) {
-        // verify that a connection can be made to node 2
-        pool2.getConnection(function (error, connection) {
-            if (error) {
-                console.log("Could not connect to node 2, redirecting connection to node 1");
-                return pool1;
-            }
-            console.log("Successful connection to node 2");
-            return pool2;
-        })
+    else if (input == 2) {
+        pool = pool2;
     }
-    return pool1;
+    else {
+        pool = pool1;
+    }
+
+    try {
+        pool.getConnection(function (error, connection) {
+            if (error) throw error;
+            connection.release();
+        })
+        console.log("Connection successful to node " + input);
+        return pool;
+    } catch (error) {
+        console.log(error);
+        console.log("Redirecting to node 1");
+        return pool1;
+    }
 }
 
-// TODO: add locking stuff and recovery stuff
-updateMovie = (pool, isolationLevel, id, name, year, rank) => {
-    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " + 
-        "id = ?";
+insertMovie = (pool, isolationLevel, name, year, rank) => {
+    var query = "INSERT INTO movies (name, year, `rank`) " +
+        "VALUES (?, ?, ?);";
 
     return new Promise((resolve, reject) => {
 
-        // update master node first 
-        pool1.getConnection(function (error, connection) {
-            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
-            connection.execute("SET AUTOCOMMIT=0");
-            connection.beginTransaction(function (error) {
-                if (error) return reject(error);
-
-                connection.execute(query, [name, year, rank, id], function (error, results) {
-                    if (error) return reject(error);
-                    console.log("Updated master node" + results);
-                    // connection.execute("COMMIT;");
-                });
-                pool1.releaseConnection(connection);
-                console.log("Connection released");
-            });
-        });
-
         pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
+
             connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
             connection.execute("SET AUTOCOMMIT=0");
             connection.beginTransaction(function (error) {
-                if (error) return reject(error);
-
-                connection.execute(query, [name, year, rank, id], function (error, results) {
-                    if (error) return reject(error);
-
-                    console.log("Updated slave node; Showing result: \n\t" + results);
-                    // connection.execute("COMMIT;");
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute(query, [name, year, rank], function (error, results) {
+                    if (error) {
+                        connection.rollback();
+                        return reject(error);
+                    }
+                    connection.execute("COMMIT;");
                     return resolve();
                 });
-                pool.releaseConnection(connection);
-                console.log("Connection released");
             });
+            console.log("Connection released");
+            pool.releaseConnection(connection);
         });
     });
 }
 
-app.get('/update', async function(req, res) {
-    var id = req.query.id;
+app.get('/insert', async function (req, res) {
     var isolationLevel = req.query.isolationLevel;
-    var pool = getPool(req.query.pool);
+    var pool = await getPool(req.query.pool);
     var name = req.query.name;
     var year = req.query.year;
-    var rank = req.query.rank; 
+    var rank = req.query.rank;
+
+    if (rank == "")
+        rank = null;
 
     try {
-        const result = await updateMovie(pool, isolationLevel, id, name, year, rank);
-        res.render('search', { tuple: result });
+        await insertMovie(pool1, isolationLevel, name, year, rank);
+        console.log("Inserted new movie at master node");
+        await insertMovie(pool, isolationLevel, name, year, rank);
+        res.redirect("/")
     } catch (error) {
         console.log(error);
     }
 })
 
 // TODO: add locking stuff and recovery stuff
-getById = (pool, isolationLevel, id) => {
-    var query = "SELECT * FROM movies WHERE id = ?";
+updateMovie = (pool, isolationLevel, id, name, year, rank) => {
+    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
+        "id = ?;";
 
     return new Promise((resolve, reject) => {
-        pool.getConnection(function(error, connection) {
-            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel); 
-            connection.beginTransaction(function(error) {
-                if(error) return reject(error); 
 
-                connection.execute(query, [id], function(error, results) {
-                    if(error) return reject(error);
+        pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
 
-                    console.log("Showing result: " + results);
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.execute("SET AUTOCOMMIT=0");
+            connection.beginTransaction(function (error) {
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
+                connection.execute(query, [name, year, rank, id], function (error, results) {
+                    if (error) {
+                        connection.rollback();
+                        return reject(error);
+                    }
                     connection.execute("COMMIT;");
-                    return resolve(results);
+                    return resolve();
                 });
-                pool.releaseConnection(connection); 
-                console.log("Connection released");
             });
+            console.log("Connection released");
+            pool.releaseConnection(connection);
         });
     });
 }
 
-app.get('/search', async function(req, res) {
+app.get('/update', async function (req, res) {
     var id = req.query.id;
     var isolationLevel = req.query.isolationLevel;
-    var pool = getPool(req.query.pool);
+    var pool = await getPool(req.query.pool);
+    var name = req.query.name;
+    var year = req.query.year;
+    var rank = req.query.rank;
+
+    if (rank == "")
+        rank = null;
+
+    try {
+        await updateMovie(pool1, isolationLevel, id, name, year, rank);
+        console.log("Updated master node");
+        await updateMovie(pool, isolationLevel, id, name, year, rank);
+        res.redirect("/")
+    } catch (error) {
+        console.log(error);
+    }
+});
+
+// TODO: add locking stuff and recovery stuff
+searchById = (pool, isolationLevel, id) => {
+    var query = "SELECT * FROM movies WHERE id = ? FOR SHARE";
+
+    return new Promise((resolve, reject) => {
+        pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
+            connection.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.beginTransaction(function (error) {
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute("SELECT * FROM movies WHERE id = ? LOCK IN SHARE MODE;", [id]);
+                connection.execute(query, [id], function (error, results) {
+                    if (error) return reject(error);
+
+                    console.log(results);
+                    connection.rollback();
+                    return resolve(results);
+                });
+            });
+            pool.releaseConnection(connection);
+        });
+    })
+}
+
+app.get('/search', async function (req, res) {
+
+    var id = req.query.id;
+    var isolationLevel = req.query.isolationLevel;
+    var pool = await getPool(req.query.pool);
+
+    console.log(id);
 
     try {
         const result = await searchById(pool, isolationLevel, id);
