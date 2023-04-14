@@ -70,8 +70,67 @@ function getPool(input) {
     return pool1;
 }
 
-// TODO: convert to bluebird syntax for this (promise wrapper)
-// also add locking stuff 
+// TODO: add locking stuff and recovery stuff
+updateMovie = (pool, isolationLevel, id, name, year, rank) => {
+    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " + 
+        "id = ?";
+
+    return new Promise((resolve, reject) => {
+
+        // update master node first 
+        pool1.getConnection(function (error, connection) {
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.execute("SET AUTOCOMMIT=0");
+            connection.beginTransaction(function (error) {
+                if (error) return reject(error);
+
+                connection.execute(query, [name, year, rank, id], function (error, results) {
+                    if (error) return reject(error);
+                    console.log("Updated master node" + results);
+                    // connection.execute("COMMIT;");
+                });
+                pool1.releaseConnection(connection);
+                console.log("Connection released");
+            });
+        });
+
+        pool.getConnection(function (error, connection) {
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.execute("SET AUTOCOMMIT=0");
+            connection.beginTransaction(function (error) {
+                if (error) return reject(error);
+
+                connection.execute(query, [name, year, rank, id], function (error, results) {
+                    if (error) return reject(error);
+
+                    console.log("Updated slave node; Showing result: \n\t" + results);
+                    // connection.execute("COMMIT;");
+                    return resolve();
+                });
+                pool.releaseConnection(connection);
+                console.log("Connection released");
+            });
+        });
+    });
+}
+
+app.get('/update', async function(req, res) {
+    var id = req.query.id;
+    var isolationLevel = req.query.isolationLevel;
+    var pool = getPool(req.query.pool);
+    var name = req.query.name;
+    var year = req.query.year;
+    var rank = req.query.rank; 
+
+    try {
+        const result = await updateMovie(pool, isolationLevel, id, name, year, rank);
+        res.render('search', { tuple: result });
+    } catch (error) {
+        console.log(error);
+    }
+})
+
+// TODO: add locking stuff and recovery stuff
 getById = (pool, isolationLevel, id) => {
     var query = "SELECT * FROM movies WHERE id = ?";
 
