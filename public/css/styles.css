@@ -81,6 +81,7 @@ input[type=checkbox] {
 	border-radius: 25px;
 	background-color: #D4C8BE;
 	margin: auto;
+	margin-top: 16px;
 	padding: 28px;
 }
 
@@ -115,25 +116,25 @@ input[type=checkbox] {
 	width: 100%;
 	border-collapse: collapse;
 	margin-bottom: 2.5rem
-  }
+}
   
 .display th, .display td {
 	text-align: center;
 	padding: 0.5rem;
 	border: 1px solid black;
-  }
+}
   
 .display th:nth-child(2), .display td:nth-child(2){
 	  width: 55%;
-  }
+}
   
 .display th:first-child, .display td:first-child 
 .display th:nth-child(3), .display td:nth-child(3),
 .display th:nth-child(4), .display td:nth-child(4) {
 	width: 15%;
-  }
+}
   
 label {
 	margin-right: 0.5rem;
 	font-weight: bold;
-  }
+}

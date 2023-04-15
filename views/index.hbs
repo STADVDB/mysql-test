@@ -7,27 +7,10 @@
     <p><a href="/rollback">rollback</a></p>
 </div>
 
-<table>
-    <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>year</th>
-        <th>rank</th>
-    </tr>
-    {{#each tuple}}
-        <tr>
-            <td> {{ this.id }} </td>
-            <td> {{ this.name }} </td>
-            <td> {{ this.year }} </td>
-            <td> {{ this.rank }} </td>
-        </tr>
-    {{/each}}
-    
-</table>
-
 <div class="box">
 	<h1>IMDB Movie Database</h1>
-	
+    
+    {{#each tuple}}	
 	<table class="display">
         <tr>
             <th>ID No.</th>		
@@ -36,12 +19,13 @@
             <th>Rank</th>
         </tr>
         <tr> <!-- Display Movie Searched -->
-            <td id="display-id">Sample ID Number</td>
-            <td id="display-name">Sample Movie Name</td>
-            <td id="display-year">Sample Movie Year</td>
-            <td id="display-rank">Sample Movie Rank</td>
-        </tr>		
+            <td> {{ this.id }} </td>
+            <td> {{ this.name }} </td>
+            <td> {{ this.year }} </td>
+            <td> {{ this.rank }} </td>
+        </tr>       
 	</table>
+    {{/each}} 
 
     <form action="/search">
         <table>
