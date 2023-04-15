@@ -43,7 +43,7 @@
         </tr>		
 	</table>
 
-    <form>
+    <form action="/search">
         <table>
             <tr>                
                 <td colspan="2">
@@ -52,7 +52,7 @@
             </tr>
             <tr>
                 <td>
-                    <input type="text" id="id" placeholder="Type Movie ID here">
+                    <input type="text" name="id" id="id" placeholder="Type Movie ID here">
                 </td>  
                 <td>
                     <select name="isolationLevel" class="isolation-dropdown">
@@ -65,7 +65,8 @@
             </tr>
             <tr>                   
                 <td colspan="2">
-                    <input class="tick" type="checkbox">
+                    <input type="hidden" name="pool" value="3">
+                    <input class="tick" type="checkbox" name="pool" value="2">
                     <p> Search in Archive </p>
                 </td>
             </tr>
@@ -115,6 +116,7 @@
         
     <form action="/update">
         <table>
+            {{#each tuple}}
             <tr>
                 <td colspan="2">
                 <label>Update Movie:</label>
@@ -122,18 +124,18 @@
             </tr>
             <tr>
                 <td>
-                <input name="id" type="text" placeholder="Movie ID" readonly>
+                <input name="id" type="text" value="{{this.id}}" placeholder="Movie ID" readonly>
                 </td>                    
                 <td>
-                    <input name="name" type="text" placeholder="Type Movie Name here">
+                    <input name="name" type="text" value="{{this.name}}" placeholder="Type Movie Name here">
                 </td>
             </tr>                  
             <tr>
                 <td>
-                    <input name="year" type="text" placeholder="Type Movie Year here">
+                    <input name="year" type="text" value="{{this.year}}" placeholder="Type Movie Year here">
                 </td>                    
                 <td>
-                    <input name="rank" type="text" placeholder="Type Movie Rank here">	
+                    <input name="rank" type="text" value="{{this.rank}}" placeholder="Type Movie Rank here">	
                 </td>
             </tr>
             <tr>
@@ -150,7 +152,8 @@
                 <td colspan="2">
                     <input type="submit" value="Update"></button>
                 </td>
-            </tr>                               
+            </tr>
+            {{/each}}
         </table>
     </form>
 </div>	
