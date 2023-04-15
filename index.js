@@ -17,6 +17,7 @@ app.use(express.static('public'));
 
 const mysql = require('mysql2');
 
+
 const con1Config = {
     host: 'ccscloud3.dlsu.edu.ph',
     port: '39000',
@@ -44,6 +45,41 @@ const con3Config = {
 const pool1 = mysql.createPool(con1Config);
 const pool2 = mysql.createPool(con2Config);
 const pool3 = mysql.createPool(con3Config);
+
+const heartbeats = require('heartbeats');
+
+var heart = heartbeats.createHeart(5000); // heart that check server every 5 seconds
+
+heart.createEvent(1, function (count, last) {
+
+    pool2.getConnection(function (error, connection) {
+        if (error) {
+            console.log('node is not running');
+        }
+        console.log('node is running');
+        connection.release();
+    });
+});
+
+app.get('/beat-heart', async function(req, res) {
+    pool = pool2; 
+    heart.createEvent(1, function(count, last) {
+        pool.getConnection(function(error, connection) {
+            if(error) {
+                console.log('node is not running');
+            }
+            console.log('node is running ' + count);
+            connection.release();
+        })
+    });
+
+    res.redirect('/');
+});
+
+app.get('/stop-heart', async function(req, res) {
+    heart.killAllEvents();
+    res.redirect('/');
+});
 
 getPool = (input) => {
     var pool;
