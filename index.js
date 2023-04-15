@@ -249,47 +249,6 @@ app.get('/', async function (req, res) {
     }
 });
 
-updateRank = () => {
-    var query = "UPDATE movies SET `rank` = 23 WHERE id = 0;";
-
-    return new Promise((resolve, reject) => {
-        pool1.getConnection(function (error, connection) {
-            connection.beginTransaction(function (err) {
-                if (err) return reject(err);
-
-                connection.execute("SET AUTOCOMMIT=0");
-                connection.execute(query, (error) => {
-                    if (error) {
-                        connection.rollback();
-                        return reject(error);
-                    }
-                    return resolve();
-                });
-            });
-            pool1.releaseConnection(connection);
-            console.log("connection released");
-        });
-    })
-}
-
-app.get('/transaction', async function (req, res) {
-    try {
-        await updateRank();
-        res.redirect('/')
-    }
-    catch (error) {
-        console.log(error)
-    }
-});
-
-app.get('/rollback', function (req, res) {
-    pool1.getConnection(function (error, connection) {
-        connection.rollback();
-        pool1.releaseConnection(connection);
-    })
-    res.redirect('/');
-});
-
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
