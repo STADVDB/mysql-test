@@ -1,0 +1,5 @@
+Sand: #AF9F8C
+Grass: #7F867B
+Matcha: #C7C7BB
+Dusty Rose: #D4C8BE
+Linen: #E3E4E0

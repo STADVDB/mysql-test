@@ -1,20 +1,11 @@
-<h1>mysql express test</h1>
-
-<style>
-    td, th {
-        padding: 2px;
-    }
-
-    table, th, td, tr {
-        border: 1px solid black;
-    }
-</style>
-
-<p><a href="/">Node 0</a></p>
-{{!-- <p><a href="/1">Node 1</a></p>
-<p><a href="/2">Node 2</a></p> --}}
-<p><a href="/transaction">transaction</a></p>
-<p><a href="/rollback">rollback</a></p>
+<div class="navigation">
+    <h1>STADVDB G16 MCO2</h1>
+    <p><a href="/">Node 0</a></p>
+    {{!-- <p><a href="/1">Node 1</a></p>
+    <p><a href="/2">Node 2</a></p> --}}
+    <p><a href="/transaction">transaction</a></p>
+    <p><a href="/rollback">rollback</a></p>
+</div>
 
 <table>
     <tr>
@@ -23,13 +14,145 @@
         <th>year</th>
         <th>rank</th>
     </tr>
-        {{#each tuple}}
-            <tr>
-                <td> {{ this.id }} </td>
-                <td> {{ this.name }} </td>
-                <td> {{ this.year }} </td>
-                <td> {{this.rank}} </td>
-            </tr>
-        {{/each}}
+    {{#each tuple}}
+        <tr>
+            <td> {{ this.id }} </td>
+            <td> {{ this.name }} </td>
+            <td> {{ this.year }} </td>
+            <td> {{ this.rank }} </td>
+        </tr>
+    {{/each}}
     
 </table>
+
+<div class="box">
+	<h1>IMDB Movie Database</h1>
+	
+	<table class="display">
+        <tr>
+            <th>ID No.</th>		
+            <th>Name</th>
+            <th>Year</th>
+            <th>Rank</th>
+        </tr>
+        <tr> <!-- Display Movie Searched -->
+            <td id="display-id">Sample ID Number</td>
+            <td id="display-name">Sample Movie Name</td>
+            <td id="display-year">Sample Movie Year</td>
+            <td id="display-rank">Sample Movie Rank</td>
+        </tr>		
+	</table>
+
+    <form>
+        <table>
+            <tr>                
+                <td colspan="2">
+                    <label>Search Movie:</label>
+                </td>               
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" id="id" placeholder="Type Movie ID here">
+                </td>  
+                <td>
+                    <select name="isolationLevel" class="isolation-dropdown">
+                        <option value="READ UNCOMMITTED">Read Uncommitted</option>
+                        <option value="READ COMMITTED">Read Committed</option>
+                        <option value="REPEATABLE READ">Repeatable Reads</option>
+                        <option value="SERIALIZABLE">Serializable</option>
+                    </select>	
+                </td>                                            
+            </tr>
+            <tr>                   
+                <td colspan="2">
+                    <input class="tick" type="checkbox">
+                    <p> Search in Archive </p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                <input type="submit" value="Search"></button>
+                </td>                      
+            </tr>                
+        </table>              
+    </form>
+
+	<form action="/insert">
+        <table>
+            <tr>
+                <td colspan="2">
+                <label>Insert Movie:</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input name="name" type="text" placeholder="Type Movie Name here">
+                </td>
+                <td>
+                    <input name="year" type="text" placeholder="Type Movie Year here">
+                </td>
+                </tr>
+            <tr>
+                <td>
+                    <input name="rank" type="text" placeholder="Type Movie Rank here">  
+                </td>
+                <td>
+                    <select name="isolationLevel" class="isolation-dropdown">
+                        <option value="READ UNCOMMITTED">Read Uncommitted</option>
+                        <option value="READ COMMITTED">Read Committed</option>
+                        <option value="REPEATABLE READ">Repeatable Reads</option>
+                        <option value="SERIALIZABLE">Serializable</option>
+                    </select>	
+                </td>                    
+            </tr>
+            <tr>                    
+                <td colspan="2">
+                    <input type="submit" value="Insert"></button>
+                </td>                                      
+            </tr> 
+        </table>
+    </form>
+        
+    <form action="/update">
+        <table>
+            <tr>
+                <td colspan="2">
+                <label>Update Movie:</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                <input name="id" type="text" placeholder="Movie ID" readonly>
+                </td>                    
+                <td>
+                    <input name="name" type="text" placeholder="Type Movie Name here">
+                </td>
+            </tr>                  
+            <tr>
+                <td>
+                    <input name="year" type="text" placeholder="Type Movie Year here">
+                </td>                    
+                <td>
+                    <input name="rank" type="text" placeholder="Type Movie Rank here">	
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <select name="isolationLevel" class="isolation-dropdown">
+                        <option value="READ UNCOMMITTED">Read Uncommitted</option>
+                        <option value="READ COMMITTED">Read Committed</option>
+                        <option value="REPEATABLE READ">Repeatable Reads</option>
+                        <option value="SERIALIZABLE">Serializable</option>
+                    </select>                        
+                </td>                    
+            </tr>
+            <tr>                  
+                <td colspan="2">
+                    <input type="submit" value="Update"></button>
+                </td>
+            </tr>                               
+        </table>
+    </form>
+</div>	
+
+<div class="spacer"></div>
