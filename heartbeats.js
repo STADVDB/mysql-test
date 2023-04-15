@@ -1,18 +1,13 @@
-var http = require('http');
+const http = require('http');
 const heartbeats = require('heartbeats');
 
-var heart = heartbeats.createHeart(5000); // heart that beats every 5 seconds
-
-// heart.createEvent(1, function (count, last) {
-//   console.log('...Every Single Beat forever');
-// });
+var heart = heartbeats.createHeart(5000); // heart that check server every 5 seconds
+const server2 = 'http://ccscloud3.dlsu.edu.ph:38002';
 
 heart.createEvent(1, function (count, last) {
-  console.log('heart beat');
   http
-    .get('	http://ccscloud3.dlsu.edu.ph:38002', function (res) {
+    .get(server2, function (res) {
       // If you get here, you have a response.
-      // If you want, you can check the status code here to verify that it's `200` or some other `2xx`.
       console.log('website running');
     })
     .on('error', function (e) {
