@@ -103,12 +103,8 @@ input[type=checkbox] {
 	height: 50px;
 }
 
-.tick {	
-	padding: 16px 16px;
+.dropdown {
 	cursor: pointer;
-}
-
-.isolation-dropdown {
 	margin: auto;
 }
 

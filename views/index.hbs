@@ -36,27 +36,31 @@
             </tr>
             <tr>
                 <td>
-                    <input type="text" name="id" id="id" placeholder="Type Movie ID here">
+                    <input type="text" name="id" placeholder="Type Movie ID here">
                 </td>  
                 <td>
-                    <select name="isolationLevel" class="isolation-dropdown">
+                    <select name="isolationLevel" class="dropdown">
                         <option value="READ UNCOMMITTED">Read Uncommitted</option>
                         <option value="READ COMMITTED">Read Committed</option>
                         <option value="REPEATABLE READ">Repeatable Reads</option>
                         <option value="SERIALIZABLE">Serializable</option>
-                    </select>	
+                    </select>
                 </td>                                            
             </tr>
             <tr>                   
-                <td colspan="2">
-                    <input type="hidden" name="pool" value="3">
-                    <input class="tick" type="checkbox" name="pool" value="2">
+                <td>
                     <p> Search in Archive </p>
+                </td>
+                <td>    
+                    <select name="pool" class="dropdown">
+                        <option value="3">No</option>
+                        <option value="2">Yes</option>
+                    </select>
                 </td>
             </tr>
             <tr>
                 <td colspan="2">
-                <input type="submit" value="Search"></button>
+                    <input type="submit" value="Search"></button>
                 </td>                      
             </tr>                
         </table>              
@@ -82,7 +86,7 @@
                     <input name="rank" type="text" placeholder="Type Movie Rank here">  
                 </td>
                 <td>
-                    <select name="isolationLevel" class="isolation-dropdown">
+                    <select name="isolationLevel" class="dropdown">
                         <option value="READ UNCOMMITTED">Read Uncommitted</option>
                         <option value="READ COMMITTED">Read Committed</option>
                         <option value="REPEATABLE READ">Repeatable Reads</option>
