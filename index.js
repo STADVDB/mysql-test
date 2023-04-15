@@ -328,7 +328,7 @@ app.get('/search', async function (req, res) {
 
     try {
         const result = await searchById(pool, isolationLevel, id);
-        res.render('search', { tuple: result });
+        res.render('index', { tuple: result });
     } catch (error) {
         console.log(error);
     }
@@ -348,13 +348,15 @@ getList = () => {
 }
 
 app.get('/', async function (req, res) {
-    try {
-        const results = await getList();
-        res.render('index', { tuple: results });
-    }
-    catch (error) {
-        console.log(error);
-    }
+    // try {
+    //     const results = await getList();
+    //     res.render('index', { tuple: results });
+    // }
+    // catch (error) {
+    //     console.log(error);
+    // }
+
+    res.render('index');
 });
 
 app.listen(port, () => {
