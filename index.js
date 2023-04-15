@@ -139,21 +139,19 @@ getPool = (input) => {
         pool = pool1;
     }
 
-    try {
-        pool.getConnection((error, connection) => {
-            if (error) {
-                console.log(error);
-                return pool1;
-            }
+    pool.getConnection(function(error, connection) {
+        if (error) {
+            console.log(error);
+        }
+        else {
             console.log("Connection successful to node " + input);
             connection.release();
-            return pool; 
-        });
-    } catch (error) {
-        console.log(error);
-        console.log("Redirecting to node 1");
-        return pool1;
-    }
+            return pool;
+        }
+    });
+
+    console.log("Connection unsuccessful to Node " + input + " redirecting to Node 1");
+    return pool1;
 }
 
 getPoolbyYear = (year) => {
@@ -326,8 +324,6 @@ app.get('/search', async function (req, res) {
     var id = req.query.id;
     var isolationLevel = req.query.isolationLevel;
     var pool = await getPool(req.query.pool);
-
-    console.log(id);
 
     try {
         const result = await searchById(pool, isolationLevel, id);
