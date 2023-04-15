@@ -123,7 +123,7 @@ app.get('/insert', async function (req, res) {
     }
 })
 
-// TODO: add locking stuff and recovery stuff
+// TODO: add recovery stuff
 updateMovie = (pool, isolationLevel, id, name, year, rank) => {
     var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
         "id = ?;";
