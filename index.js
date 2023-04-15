@@ -45,6 +45,87 @@ const pool1 = mysql.createPool(con1Config);
 const pool2 = mysql.createPool(con2Config);
 const pool3 = mysql.createPool(con3Config);
 
+const fs = require('fs');
+
+// log paths 
+const directoryPath = 'logs/';
+const historyPath = 'logs/history.json';
+const errorPath = 'logs/errors.json';
+
+// Create log files if they do not exist yet 
+if (!fs.existsSync(directoryPath)) {
+    fs.mkdirSync(directoryPath, { recursive: true });
+}
+
+if (!fs.existsSync(historyPath)) {
+    console.log('Creating history log');
+    fs.writeFileSync('logs/history.json', '[]');
+}
+
+if (!fs.existsSync(errorPath)) {
+    console.log('Creating error log');
+    fs.writeFileSync('logs/errors.json', '[]');
+}
+
+const UNRESOLVED = 'UNRESOLVED';
+const RESOLVED = 'RESOLVED';
+const COMMITTED = 'COMMITTED';
+const ABORTED = 'ABORTED';
+
+date = new Date();
+
+function Error(node, status) {
+    this.date = date;
+    this.node = node;
+    this.status = status;
+}
+
+function Update(node, id, name, year, rank, status) {
+    this.node = node;
+    this.date = date;
+    this.id = id;
+    this.name = name;
+    this.year = year;
+    this.rank = rank;
+    this.status = status;
+}
+
+function Insert(node, name, year, rank, status) {
+    this.node = node;
+    this.date = date;
+    this.name = name;
+    this.year = year;
+    this.rank = rank;
+    this.status = status;
+}
+
+async function log(path, log) {
+    fs.readFile(path, function (error, data) {
+        if (error) console.log(error);
+
+        var jsonContent = JSON.parse(data);
+        jsonContent.push(log);
+        var jsonString = JSON.stringify(jsonContent);
+        fs.writeFile(path, jsonString, function (error) {
+            if (error) console.log(error);
+        });
+        console.log('The new item was appended to the JSON array!');
+    });
+}
+
+async function setResolved(index) {
+    fs.readFile(errorPath, function (error, data) {
+        if (error) console.log(error);
+
+        var jsonContent = JSON.parse(data);
+        jsonContent[index].status = "RESOLVED";
+        var jsonString = JSON.stringify(jsonContent);
+        fs.writeFile(errorPath, jsonString, function (error) {
+            if (error) console.log(error);
+        });
+    })
+}
+
 getPool = (input) => {
     var pool;
 
@@ -79,9 +160,24 @@ getPoolbyYear = (year) => {
     return pool2;
 }
 
+getPoolNumber = (pool) => {
+    if (pool == pool1) {
+        return 1;
+    }
+    else if (pool == pool2) {
+        return 2;
+    }
+    else {
+        return 3;
+    }
+}
+
 insertMovie = (pool, isolationLevel, name, year, rank) => {
     var query = "INSERT INTO movies (name, year, `rank`) " +
         "VALUES (?, ?, ?);";
+
+    const NODE = getPoolNumber(pool);
+    var newLog = new Insert(NODE, name, year, rank, ABORTED);
 
     return new Promise((resolve, reject) => {
 
@@ -98,8 +194,12 @@ insertMovie = (pool, isolationLevel, name, year, rank) => {
                 connection.execute(query, [name, year, rank], function (error, results) {
                     if (error) {
                         connection.rollback();
+                        log(historyPath, newLog);
+                        log(errorPath, new Error(NODE, UNRESOLVED));
                         return reject(error);
                     }
+                    newLog.status = COMMITTED;
+                    log(historyPath, newLog);
                     connection.execute("COMMIT;");
                     return resolve();
                 });
@@ -135,6 +235,9 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
     var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
         "id = ?;";
 
+    const NODE = getPoolNumber(pool);
+    var newLog = new Update(NODE, id, name, year, rank, ABORTED);
+
     return new Promise((resolve, reject) => {
 
         pool.getConnection(function (error, connection) {
@@ -151,8 +254,12 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                 connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
                         connection.rollback();
+                        log(historyPath, newLog);
+                        log(errorPath, new Error(NODE, UNRESOLVED));
                         return reject(error);
                     }
+                    newLog.status = COMMITTED;
+                    log(historyPath, newLog);
                     connection.execute("COMMIT;");
                     return resolve();
                 });
@@ -229,6 +336,7 @@ app.get('/search', async function (req, res) {
 
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
+    // var query = "SELECT * FROM movies ORDER BY id DESC LIMIT 30;";
 
     return new Promise((resolve, reject) => {
         pool1.query(query, (error, results) => {
