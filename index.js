@@ -140,12 +140,15 @@ getPool = (input) => {
     }
 
     try {
-        pool.getConnection(function (error, connection) {
-            if (error) throw error;
+        pool.getConnection((error, connection) => {
+            if (error) {
+                console.log(error);
+                return pool1;
+            }
+            console.log("Connection successful to node " + input);
             connection.release();
-        })
-        console.log("Connection successful to node " + input);
-        return pool;
+            return pool; 
+        });
     } catch (error) {
         console.log(error);
         console.log("Redirecting to node 1");
