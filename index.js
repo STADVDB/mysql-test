@@ -72,7 +72,7 @@ getPool = (input) => {
     }
 }
 
-getPoolById = (year) => {
+getPoolbyYear = (year) => {
     if (year >= 1980) {
         return pool3;
     }
@@ -114,7 +114,7 @@ app.get('/insert', async function (req, res) {
     var isolationLevel = req.query.isolationLevel;
     var name = req.query.name;
     var year = req.query.year;
-    var pool = await getPoolById(year);
+    var pool = await getPoolbyYear(year);
     var rank = req.query.rank;
 
     if (rank == "")
@@ -232,7 +232,7 @@ getList = () => {
 
     return new Promise((resolve, reject) => {
         pool1.query(query, (error, results) => {
-            if(error) return reject(error);
+            if (error) return reject(error);
 
             return resolve(results);
         })
@@ -242,9 +242,9 @@ getList = () => {
 app.get('/', async function (req, res) {
     try {
         const results = await getList();
-        res.render('index', { tuple: results});
+        res.render('index', { tuple: results });
     }
-    catch(error) {
+    catch (error) {
         console.log(error);
     }
 });
@@ -253,9 +253,9 @@ updateRank = () => {
     var query = "UPDATE movies SET `rank` = 23 WHERE id = 0;";
 
     return new Promise((resolve, reject) => {
-        pool1.getConnection(function(error, connection) {
-            connection.beginTransaction(function(err) {
-                if(err) return reject(err);
+        pool1.getConnection(function (error, connection) {
+            connection.beginTransaction(function (err) {
+                if (err) return reject(err);
 
                 connection.execute("SET AUTOCOMMIT=0");
                 connection.execute(query, (error) => {
@@ -277,13 +277,13 @@ app.get('/transaction', async function (req, res) {
         await updateRank();
         res.redirect('/')
     }
-    catch(error) {
+    catch (error) {
         console.log(error)
     }
 });
 
 app.get('/rollback', function (req, res) {
-    pool1.getConnection(function(error, connection) {
+    pool1.getConnection(function (error, connection) {
         connection.rollback();
         pool1.releaseConnection(connection);
     })
