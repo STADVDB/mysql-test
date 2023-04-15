@@ -72,6 +72,8 @@ const RESOLVED = 'RESOLVED';
 const COMMITTED = 'COMMITTED';
 const ABORTED = 'ABORTED';
 
+date = new Date();
+
 function Error(node, status) {
     this.date = date;
     this.node = node;
@@ -159,14 +161,14 @@ getPoolbyYear = (year) => {
 }
 
 getPoolNumber = (pool) => {
-    if(pool == pool1){
+    if (pool == pool1) {
         return 1;
     }
-    else if(pool == pool2) {
+    else if (pool == pool2) {
         return 2;
     }
     else {
-        return 3; 
+        return 3;
     }
 }
 
@@ -175,30 +177,30 @@ insertMovie = (pool, isolationLevel, name, year, rank) => {
         "VALUES (?, ?, ?);";
 
     const NODE = getPoolNumber(pool);
-    var log = new Insert(NODE, name, year, rank, ABORTED); 
-    
-        return new Promise((resolve, reject) => {
-    
-            pool.getConnection(function (error, connection) {
-                if (error) return reject(error);
-    
-                connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
-                connection.execute("SET AUTOCOMMIT=0");
-                connection.beginTransaction(function (error) {
+    var newLog = new Insert(NODE, name, year, rank, ABORTED);
+
+    return new Promise((resolve, reject) => {
+
+        pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
+
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.execute("SET AUTOCOMMIT=0");
+            connection.beginTransaction(function (error) {
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute(query, [name, year, rank], function (error, results) {
                     if (error) {
                         connection.rollback();
+                        log(historyPath, newLog);
+                        log(errorPath, new Error(NODE, UNRESOLVED));
                         return reject(error);
                     }
-                    connection.execute(query, [name, year, rank], function (error, results) {
-                        if (error) {
-                            connection.rollback();
-                            log(historyPath, log); 
-                            log(errorPath, new Error(NODE, UNRESOLVED));
-                            return reject(error);
-                        }
-                        log.status = COMMITTED;
-                        log(historyPath, log); 
-                        connection.execute("COMMIT;");
+                    newLog.status = COMMITTED;
+                    log(historyPath, newLog);
+                    connection.execute("COMMIT;");
                     return resolve();
                 });
             });
@@ -234,7 +236,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
         "id = ?;";
 
     const NODE = getPoolNumber(pool);
-    var log = new Update(NODE, id, name, year, rank, ABORTED); 
+    var newLog = new Update(NODE, id, name, year, rank, ABORTED);
 
     return new Promise((resolve, reject) => {
 
@@ -252,12 +254,12 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                 connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
                         connection.rollback();
-                        log(historyPath, log);
+                        log(historyPath, newLog);
                         log(errorPath, new Error(NODE, UNRESOLVED));
                         return reject(error);
                     }
-                    log.status = COMMITTED;
-                    log(historyPath, log); 
+                    newLog.status = COMMITTED;
+                    log(historyPath, newLog);
                     connection.execute("COMMIT;");
                     return resolve();
                 });
@@ -334,6 +336,7 @@ app.get('/search', async function (req, res) {
 
 getList = () => {
     var query = "SELECT * FROM movies LIMIT 30;";
+    // var query = "SELECT * FROM movies ORDER BY id DESC LIMIT 30;";
 
     return new Promise((resolve, reject) => {
         pool1.query(query, (error, results) => {
