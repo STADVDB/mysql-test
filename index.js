@@ -126,7 +126,21 @@ async function setResolved(index) {
     })
 }
 
-getPool = (input) => {
+// async function checkConnection(pool, input) {
+//     await pool.getConnection(async function (error, connection) {
+//         if (error) {
+//             console.log(error);
+//             return false;
+//         }
+//         else {
+//             console.log("Connection successful to node " + input);
+//             connection.release();
+//             return true;
+//         }
+//     });
+// }
+
+async function getPool(input) {
     var pool;
 
     if (input == 3) {
@@ -139,19 +153,8 @@ getPool = (input) => {
         pool = pool1;
     }
 
-    pool.getConnection(function(error, connection) {
-        if (error) {
-            console.log(error);
-        }
-        else {
-            console.log("Connection successful to node " + input);
-            connection.release();
-            return pool;
-        }
-    });
+    return pool; 
 
-    console.log("Connection unsuccessful to Node " + input + " redirecting to Node 1");
-    return pool1;
 }
 
 getPoolbyYear = (year) => {
@@ -330,6 +333,9 @@ app.get('/search', async function (req, res) {
         res.render('index', { tuple: result });
     } catch (error) {
         console.log(error);
+        console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1"); 
+        const result = await searchById(pool1, isolationLevel, id);
+        res.render('index', { tuple: result });
     }
 });
 
