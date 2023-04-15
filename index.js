@@ -72,6 +72,13 @@ getPool = (input) => {
     }
 }
 
+getPoolById = (year) => {
+    if (year >= 1980) {
+        return pool3;
+    }
+    return pool2;
+}
+
 insertMovie = (pool, isolationLevel, name, year, rank) => {
     var query = "INSERT INTO movies (name, year, `rank`) " +
         "VALUES (?, ?, ?);";
@@ -105,9 +112,9 @@ insertMovie = (pool, isolationLevel, name, year, rank) => {
 
 app.get('/insert', async function (req, res) {
     var isolationLevel = req.query.isolationLevel;
-    var pool = await getPool(req.query.pool);
     var name = req.query.name;
     var year = req.query.year;
+    var pool = await getPoolById(year);
     var rank = req.query.rank;
 
     if (rank == "")
