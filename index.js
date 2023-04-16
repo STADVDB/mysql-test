@@ -24,7 +24,7 @@ const con1Config = {
     user: 'dev',
     password: '12341234',
     database: 'imdb',
-    connectTimeout: 10000
+    connectTimeout: 50000
 }
 
 const con2Config = {
@@ -33,7 +33,7 @@ const con2Config = {
     user: 'dev',
     password: '12341234',
     database: 'imdb',
-    connectTimeout: 10000
+    connectTimeout: 50000
 }
 
 const con3Config = {
@@ -42,7 +42,7 @@ const con3Config = {
     user: 'dev',
     password: '12341234',
     database: 'imdb',
-    connectTimeout: 10000
+    connectTimeout: 50000
 }
 
 const pool1 = mysql.createPool(con1Config);
