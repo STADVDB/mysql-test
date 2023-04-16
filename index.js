@@ -213,18 +213,44 @@ recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
                     return reject(error);
                 }
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
-                connection.execute(query, [name, year, rank, id], function (error, results) {
-                    if (error) {
-                        connection.rollback();
-                        log(historyPath, newLog);
-                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
-                        return reject(error);
+                if(pool == pool1) {
+                    async function wait() {
+                        const sleep = ms => new Promise(r => setTimeout(r, ms));
+                        await sleep(30000) // await needs to be inside an async function
+                        // code after await and INSIDE THE FUNCTION is executed after the wait time
+                        // TODO: insert code to do after below
+                        connection.execute(query, [name, year, rank, id], function (error, results) {
+                            if (error) {
+                                connection.rollback();
+                                log(historyPath, newLog);
+                                log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+                                return reject(error);
+                            }
+                            newLog.status = COMMITTED;
+                            log(historyPath, newLog);
+                            connection.execute("COMMIT;");
+                            return resolve();
+                        });
+                        console.log("After 30 seconds")
                     }
-                    newLog.status = COMMITTED;
-                    log(historyPath, newLog);
-                    connection.execute("COMMIT;");
-                    return resolve();
-                });
+
+                    wait();
+                }
+                else {
+                    connection.execute(query, [name, year, rank, id], function (error, results) {
+                        if (error) {
+                            connection.rollback();
+                            log(historyPath, newLog);
+                            log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+                            return reject(error);
+                        }
+                        newLog.status = COMMITTED;
+                        log(historyPath, newLog);
+                        connection.execute("COMMIT;");
+                        return resolve();
+                    });
+                }
+                
             });
             console.log("Connection released");
             pool.releaseConnection(connection);
