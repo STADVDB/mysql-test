@@ -16,6 +16,7 @@ app.engine("hbs", exphbs.engine({
 app.use(express.static('public'));
 
 const mysql = require('mysql2');
+const heartbeats = require('heartbeats');
 
 const con1Config = {
     host: 'ccscloud3.dlsu.edu.ph',
@@ -133,28 +134,39 @@ async function setResolved(index) {
     })
 }
 
-fs.watch(errorPath, (eventType, filename) => {
-    // Check if the event is a change to the file
-    if (eventType === 'change') {
-        // Read the JSON file
-        fs.readFileSync(errorPath, async function (error, data) {
-            if (error) console.log(error);
+fs.watchFile(errorPath, { persistent: true, interval: 500 }, (curr, prev) => {
+    fs.readFile(errorPath, (err, data) => {
+        if (err) throw err;
 
-            var parsed = await JSON.parse(data);
-            await parsed.push(log);
+        const parsed = JSON.parse(data);
+        const index = parsed.length - 1; 
+        const recentLog = parsed[index];
 
-            var recentLog = parsed[parsed.length - 1];
-
-            // Check if the status attribute is "UNRESOLVED"
-            if (recentLog.status === UNRESOLVED) {
-                console.log('Status is UNRESOLVED!');
-                // Do something here, such as send an email notification or trigger another action
-            }
-        });
-    }
+        if (recentLog.status === 'UNRESOLVED') {
+            console.log("Unresolved error found, starting pulse");
+            createPulse(getPool(recentLog.node), recentLog.node);
+        }
+    });
 });
 
-async function getPool(input) {
+var heart = heartbeats.createHeart(5000); // heart that check server every 5 seconds
+
+createPulse = (pool, nodeNumber) => {
+    heart.createEvent(1, function (count, last) {
+
+        pool.getConnection(function (error, connection) {
+            if (error) {
+                console.log('Reconnecting to node ' + nodeNumber);
+            }
+            else {
+                console.log('Reconnected to node ' + nodeNumber);
+                connection.release();
+            }
+        });
+    });
+}
+
+function getPool(input) {
     var pool;
 
     if (input == 3) {
@@ -306,7 +318,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
 app.get('/update', async function (req, res) {
     var id = req.query.id;
     var isolationLevel = req.query.isolationLevel;
-    var pool = await getPool(req.query.pool);
+    var pool = getPool(req.query.pool);
     var name = req.query.name;
     var year = req.query.year;
     var rank = req.query.rank;
@@ -369,7 +381,7 @@ app.get('/search', async function (req, res) {
 
     var id = req.query.id;
     var isolationLevel = req.query.isolationLevel;
-    var pool = await getPool(req.query.pool);
+    var pool = getPool(req.query.pool);
 
     try {
         const result = await searchById(pool, isolationLevel, id);

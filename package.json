@@ -4,7 +4,8 @@
   "description": "test",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "node index.js",
+    "start": "nodemon index.js --ignore logs/"
   },
   "repository": {
     "type": "git",
