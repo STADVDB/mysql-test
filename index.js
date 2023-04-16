@@ -19,26 +19,26 @@ const mysql = require('mysql2');
 const heartbeats = require('heartbeats');
 
 const con1Config = {
-    host: '172.16.13.100',
+    host: '172.16.3.100',
     port: 3306,
-    user: 'root',
-    password: '1234',
+    user: 'dev',
+    password: '12341234',
     database: 'imdb'
 }
 
 const con2Config = {
-    host: '172.16.13.101',
+    host: '172.16.3.101',
     port: '3306',
-    user: 'root',
-    password: '1234',
+    user: 'dev',
+    password: '12341234',
     database: 'imdb'
 }
 
 const con3Config = {
-    host: '172.16.13.102',
+    host: '172.16.3.102',
     port: '3306',
-    user: 'root',
-    password: 'password',
+    user: 'dev',
+    password: '12341234',
     database: 'imdb'
 }
 
