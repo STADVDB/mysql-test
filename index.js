@@ -423,24 +423,22 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     }
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
-                    // if(pool == pool1) {
-                    //     async function wait() {
-                    //         const sleep = ms => new Promise(r => setTimeout(r, ms));
-                    //         await sleep(10000) // await needs to be inside an async function
-                    //         // code after await and INSIDE THE FUNCTION is executed after the wait time
-                    //         // TODO: insert code to do after below
-                    //         console.log("After 10 seconds")
-                    //     }
-                    //     wait();
-                    // }
                     if(pool == pool1) {
-                        console.log("doing sleep");
-                        connection.execute("DO SLEEP(15);");
-                        console.log("done sleep");
-
-                        connection.execute("COMMIT;");
+                        async function wait() {
+                            const sleep = ms => new Promise(r => setTimeout(r, ms));
+                            await sleep(10000) // await needs to be inside an async function
+                            // code after await and INSIDE THE FUNCTION is executed after the wait time
+                            // TODO: insert code to do after below
+                            console.log("After 10 seconds");
+                            connection.execute("COMMIT;");
+                            return resolve(); 
+                        }
+                        wait();
                     }
-                    return resolve();
+                    else {
+                        connection.execute("COMMIT;");
+                        return resolve(); 
+                    }
                 });
             });
             console.log("Connection released");
