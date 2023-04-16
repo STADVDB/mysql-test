@@ -473,7 +473,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                 //     wait();
                 // }
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
-                connection.execute("query", [name, year, rank, id], function (error, results) {
+                connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
                         connection.rollback();
                         log(historyPath, newLog);
