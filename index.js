@@ -205,8 +205,8 @@ function isTargetNode(nodeNumber, errorType, currentNode) {
 // wait()
 
 recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
-    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
-        "id = ?;";
+    // var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
+    //     "id = ?;";
     var query = ""; 
 
     const NODE = getPoolNumber(pool);
