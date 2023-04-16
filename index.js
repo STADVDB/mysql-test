@@ -426,14 +426,14 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     if(pool == pool1) {
                         async function wait() {
                             const sleep = ms => new Promise(r => setTimeout(r, ms));
-                            await sleep(15000) // await needs to be inside an async function
+                            await sleep(10000) // await needs to be inside an async function
                             // code after await and INSIDE THE FUNCTION is executed after the wait time
                             // TODO: insert code to do after below
 
-                            connection.execute("COMMIT;");
-                            console.log("After 15 seconds")
+                            console.log("After 10 seconds")
                             return resolve();
                         }
+                        connection.execute("COMMIT;");
                         wait();
                     }
                 });
