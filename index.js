@@ -395,7 +395,7 @@ app.get('/insert', async function (req, res) {
 
 // TODO: add recovery stuff
 updateMovie = (pool, isolationLevel, id, name, year, rank) => {
-    var query = "DO SLEEP(15); UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
+    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
         "id = ?;";
 
     const NODE = getPoolNumber(pool);
@@ -413,16 +413,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     connection.rollback();
                     return reject(error);
                 }
-                // if (pool == pool3) {
-                //     async function wait() {
-                //         const sleep = ms => new Promise(r => setTimeout(r, ms));
-                //         await sleep(15000) // await needs to be inside an async function
-                //         // code after await and INSIDE THE FUNCTION is executed after the wait time
-                //         // TODO: insert code to do after below
-                //         console.log("After 15 seconds");
-                //     }
-                //     wait();
-                // }
+                
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
                 connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
@@ -433,7 +424,18 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     }
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
-                    
+                    connection.execute("DO SLEEP(15);", function(error, results) {
+                        if (pool == pool3) {
+                        async function wait() {
+                            const sleep = ms => new Promise(r => setTimeout(r, ms));
+                            await sleep(15000) // await needs to be inside an async function
+                            // code after await and INSIDE THE FUNCTION is executed after the wait time
+                            // TODO: insert code to do after below
+                            console.log("After 15 seconds");
+                        }
+                        wait();
+                        }
+                    })
                     connection.execute("COMMIT;");
                     return resolve(); 
                 });
