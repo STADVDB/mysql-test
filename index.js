@@ -20,7 +20,7 @@ const heartbeats = require('heartbeats');
 
 const con1Config = {
     host: '172.16.13.100',
-    port: '3306',
+    port: 3306,
     user: 'dev',
     password: '12341234',
     database: 'imdb'
