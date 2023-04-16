@@ -82,7 +82,7 @@ date = new Date();
 function Error(node, type, status) {
     this.date = date;
     this.node = node;
-    this.type = type; 
+    this.type = type;
     this.status = status;
 }
 
@@ -99,7 +99,7 @@ function Update(node, id, name, year, rank, status) {
 
 function Insert(node, id, name, year, rank, status) {
     this.node = node;
-    this.type = INSERT; 
+    this.type = INSERT;
     this.date = date;
     this.name = name;
     this.year = year;
@@ -146,7 +146,7 @@ fs.watchFile(errorPath, { persistent: true, interval: 500 }, (curr, prev) => {
         if (err) console.log(err);
 
         const parsed = JSON.parse(data);
-        const index = parsed.length - 1; 
+        const index = parsed.length - 1;
         const recentLog = parsed[index];
 
         if (recentLog.status === UNRESOLVED) {
@@ -177,64 +177,64 @@ createPulse = (pool, nodeNumber, index, errorLog) => {
 }
 
 function isTargetNode(nodeNumber, errorType, currentNode) {
-    if(errorType == TRANSACTION) {
-        if(nodeNumber == currentNode) {
-            return true; 
-        } 
-        return false; 
+    if (errorType == TRANSACTION) {
+        if (nodeNumber == currentNode) {
+            return true;
+        }
+        return false;
     }
     else {
-        if(nodeNumber == 1 && (currentNode == 2 || currentNode == 3)) {
-            return true; 
+        if (nodeNumber == 1 && (currentNode == 2 || currentNode == 3)) {
+            return true;
         }
-        else if((nodeNumber == 2 || nodeNumber == 3) && currentNode == 1) {
-            return true; 
+        else if ((nodeNumber == 2 || nodeNumber == 3) && currentNode == 1) {
+            return true;
         }
-        return false; 
+        return false;
     }
 }
 
-recover = (pool, nodeNumber, errorLog) => {
-    fs.readFile(historyPath, async (error, data) => {
-        if(error) console.log(error); 
+function recover(pool, nodeNumber, errorLog) {
+    fs.readFile(historyPath, function (error, data) {
+        if (error) console.log(error);
 
         var parsed = JSON.parse(data);
-        var errorType = errorLog.type; 
+        var errorType = errorLog.type;
         // var checkpoint = errorLog.date; 
 
-        for(i = 0; i < parsed.length; i++) {
-            current = parsed[i]; 
+        for (i = 0; i < parsed.length; i++) {
+            current = parsed[i];
             if (isTargetNode(nodeNumber, errorType, current.node)) {
                 if (nodeNumber == 1 && current.status == COMMITTED) {
                     if (current.type == UPDATE) {
-                        await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                        updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                     }
                     else if (current.type == INSERT) {
-                        await recoveryInsert(pool, current.name, current.year, current.rank);
+                        recoveryInsert(pool, current.name, current.year, current.rank);
                     }
                 }
                 else if (nodeNumber == 2) {
                     if (current.year < 1980 && current.status == COMMITTED) {
                         if (current.type == UPDATE) {
-                            await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                            updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                         }
                         else if (current.type == INSERT) {
-                            await recoveryInsert(pool, current.name, current.year, current.rank);
+                            recoveryInsert(pool, current.name, current.year, current.rank);
                         }
                     }
                 }
                 else if (nodeNumber == 3) {
                     if (current.year >= 1980 && current.status == COMMITTED) {
                         if (current.type == UPDATE) {
-                            await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                            updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                         }
                         else if (current.type == INSERT) {
-                            await recoveryInsert(pool, current.name, current.year, current.rank);
+                            recoveryInsert(pool, current.name, current.year, current.rank);
                         }
                     }
                 }
             }
-            
+
         }
     })
 }
@@ -242,14 +242,14 @@ recover = (pool, nodeNumber, errorLog) => {
 recoveryInsert = (pool, name, year, rank) => {
     result = searchByName(pool, name)
     result.then((data) => {
-        if(data.length == 0) {
-            insertMovie(pool, 'SERIALIZABLE', name, year, rank); 
+        if (data.length == 0) {
+            insertMovie(pool, 'SERIALIZABLE', name, year, rank);
         }
         else {
             fromDB = data[0].name + data[0].year + data[0].rank;
-            fromLogs = name + year + rank; 
-            if(fromDB != fromLogs) {
-                insertMovie(pool, 'SERIALIZABLE', name, year, rank); 
+            fromLogs = name + year + rank;
+            if (fromDB != fromLogs) {
+                insertMovie(pool, 'SERIALIZABLE', name, year, rank);
             }
             else {
                 console.log("Insert not needed"); // for test only, delete this clause after
@@ -261,7 +261,7 @@ recoveryInsert = (pool, name, year, rank) => {
 // insertMovie = (pool, isolationLevel, name, year, rank) => {
 
 searchByName = (pool, name) => {
-    query = "SELECT * FROM movies WHERE name LIKE ? LIMIT 1;"; 
+    query = "SELECT * FROM movies WHERE name LIKE ? LIMIT 1;";
 
     return new Promise((resolve, reject) => {
         pool.getConnection(function (error, connection) {
@@ -405,7 +405,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
 
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
-            
+
             connection.execute("SET AUTOCOMMIT=0");
             connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
             connection.beginTransaction(function (error) {
@@ -435,7 +435,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
                     connection.execute("COMMIT;");
-                    return resolve(); 
+                    return resolve();
                 });
             });
             console.log("Connection released");
@@ -445,7 +445,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
 }
 
 function getReplica(pool, year) {
-    if(pool == pool1) {
+    if (pool == pool1) {
         if (year >= 1980) {
             return pool3;
         }
@@ -467,9 +467,9 @@ app.get('/update', async function (req, res) {
     var rank = req.query.rank;
     var replica = getReplica(pool, year);
 
-    if(rank == "") {
+    if (rank == "") {
         rank = null;
-    }   
+    }
 
     try {
         await updateMovie(pool, isolationLevel, id, name, year, rank);
@@ -527,23 +527,23 @@ app.get('/search', async function (req, res) {
     var isolationLevel = req.query.isolationLevel;
     var pool = getPool(req.query.pool);
 
-    if(req.query.pool == 1) {
+    if (req.query.pool == 1) {
         try {
-            const result = await searchById(pool1, isolationLevel, id); 
-            res.render('index', { tuple: result, pool: req.query.pool, level: req.query.isolationLevel}); 
+            const result = await searchById(pool1, isolationLevel, id);
+            res.render('index', { tuple: result, pool: req.query.pool, level: req.query.isolationLevel });
         }
-        catch(error) {
+        catch (error) {
             // if node 1 is down try searching the other nodes 
             console.log("could not connect to node 1 trying other nodes")
-            result = searchById(pool3, isolationLevel, id); 
+            result = searchById(pool3, isolationLevel, id);
             result.then(async (data) => {
-                if(data.length == 0) {
+                if (data.length == 0) {
                     try {
                         const result2 = await searchById(pool2, isolationLevel, id);
-                        res.render('index', { tuple: result2, pool: req.query.pool, level: req.query.isolationLevel }); 
+                        res.render('index', { tuple: result2, pool: req.query.pool, level: req.query.isolationLevel });
                     }
-                    catch(error) {
-                        console.log(error); 
+                    catch (error) {
+                        console.log(error);
                         res.redirect('/');
                     }
                 }
