@@ -433,9 +433,11 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     //     }
                     //     wait();
                     // }
-                    console.log("doing sleep");
-                    connection.execute("DO SLEEP(15)"); 
-                    console.log("done sleep");
+                    if(pool == pool1) {
+                        console.log("doing sleep");
+                        connection.execute("DO SLEEP(15)");
+                        console.log("done sleep");
+                    }
 
                     connection.execute("COMMIT;");
                     return resolve();
