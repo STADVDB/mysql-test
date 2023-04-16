@@ -23,8 +23,7 @@ const con1Config = {
     port: 3306,
     user: 'dev',
     password: '12341234',
-    database: 'imdb',
-    connectTimeout: 50000
+    database: 'imdb'
 }
 
 const con2Config = {
@@ -32,8 +31,7 @@ const con2Config = {
     port: '3306',
     user: 'dev',
     password: '12341234',
-    database: 'imdb',
-    connectTimeout: 50000
+    database: 'imdb'
 }
 
 const con3Config = {
@@ -41,8 +39,7 @@ const con3Config = {
     port: '3306',
     user: 'dev',
     password: '12341234',
-    database: 'imdb',
-    connectTimeout: 50000
+    database: 'imdb'
 }
 
 const pool1 = mysql.createPool(con1Config);
