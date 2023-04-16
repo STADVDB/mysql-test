@@ -406,41 +406,80 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
 
-            connection.execute("SET AUTOCOMMIT=0");
-            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
-            connection.beginTransaction(function (error) {
-                if (error) {
-                    connection.rollback();
-                    return reject(error);
-                }
-                connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
-                connection.execute(query, [name, year, rank, id], function (error, results) {
-                    if (error) {
-                        connection.rollback();
-                        log(historyPath, newLog);
-                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
-                        return reject(error);
-                    }
-                    newLog.status = COMMITTED;
-                    log(historyPath, newLog);
-                    if(pool == pool1) {
-                        async function wait() {
-                            const sleep = ms => new Promise(r => setTimeout(r, ms));
-                            await sleep(10000) // await needs to be inside an async function
-                            // code after await and INSIDE THE FUNCTION is executed after the wait time
-                            // TODO: insert code to do after below
-                            console.log("After 10 seconds");
-                            connection.execute("COMMIT;");
-                            return resolve(); 
+            connection.execute("SET AUTOCOMMIT=0", function (err) {
+                connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel, function (err) {
+                    connection.beginTransaction(function (error) {
+                        if (error) {
+                            connection.rollback();
+                            return reject(error);
                         }
-                        wait();
-                    }
-                    else {
-                        connection.execute("COMMIT;");
-                        return resolve(); 
-                    }
+                        connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
+                        connection.execute(query, [name, year, rank, id], function (error, results) {
+                            if (error) {
+                                connection.rollback();
+                                log(historyPath, newLog);
+                                log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+                                return reject(error);
+                            }
+                            newLog.status = COMMITTED;
+                            log(historyPath, newLog);
+                            if (pool == pool1) {
+                                async function wait() {
+                                    const sleep = ms => new Promise(r => setTimeout(r, ms));
+                                    await sleep(10000) // await needs to be inside an async function
+                                    // code after await and INSIDE THE FUNCTION is executed after the wait time
+                                    // TODO: insert code to do after below
+                                    console.log("After 10 seconds");
+                                    connection.execute("COMMIT;");
+                                    return resolve();
+                                }
+                                wait();
+                            }
+                            else {
+                                connection.execute("COMMIT;");
+                                return resolve();
+                            }
+                        });
+                    });
                 });
             });
+            
+
+            // connection.execute("SET AUTOCOMMIT=0");
+            // connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            // connection.beginTransaction(function (error) {
+            //     if (error) {
+            //         connection.rollback();
+            //         return reject(error);
+            //     }
+            //     connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
+            //     connection.execute(query, [name, year, rank, id], function (error, results) {
+            //         if (error) {
+            //             connection.rollback();
+            //             log(historyPath, newLog);
+            //             log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+            //             return reject(error);
+            //         }
+            //         newLog.status = COMMITTED;
+            //         log(historyPath, newLog);
+            //         if(pool == pool1) {
+            //             async function wait() {
+            //                 const sleep = ms => new Promise(r => setTimeout(r, ms));
+            //                 await sleep(10000) // await needs to be inside an async function
+            //                 // code after await and INSIDE THE FUNCTION is executed after the wait time
+            //                 // TODO: insert code to do after below
+            //                 console.log("After 10 seconds");
+            //                 connection.execute("COMMIT;");
+            //                 return resolve(); 
+            //             }
+            //             wait();
+            //         }
+            //         else {
+            //             connection.execute("COMMIT;");
+            //             return resolve(); 
+            //         }
+            //     });
+            // });
             console.log("Connection released");
             pool.releaseConnection(connection);
         });
