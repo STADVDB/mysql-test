@@ -194,6 +194,44 @@ function isTargetNode(nodeNumber, errorType, currentNode) {
     }
 }
 
+recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
+    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
+        "id = ?;";
+
+    const NODE = getPoolNumber(pool);
+    var newLog = new Update(NODE, id, name, year, rank, ABORTED);
+
+    return new Promise((resolve, reject) => {
+
+        pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
+
+            connection.execute("SET AUTOCOMMIT=0");
+            connection.beginTransaction(function (error) {
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
+                connection.execute(query, [name, year, rank, id], function (error, results) {
+                    if (error) {
+                        connection.rollback();
+                        log(historyPath, newLog);
+                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+                        return reject(error);
+                    }
+                    newLog.status = COMMITTED;
+                    log(historyPath, newLog);
+                    connection.execute("COMMIT;");
+                    return resolve();
+                });
+            });
+            console.log("Connection released");
+            pool.releaseConnection(connection);
+        });
+    });
+}
+
 function recover(pool, nodeNumber, errorLog) {
     fs.readFile(historyPath, function (error, data) {
         if (error) console.log(error);
@@ -207,7 +245,7 @@ function recover(pool, nodeNumber, errorLog) {
             if (isTargetNode(nodeNumber, errorType, current.node)) {
                 if (nodeNumber == 1 && current.status == COMMITTED) {
                     if (current.type == UPDATE) {
-                        updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                        recoveryUpdate(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                     }
                     else if (current.type == INSERT) {
                         recoveryInsert(pool, current.name, current.year, current.rank);
@@ -216,7 +254,7 @@ function recover(pool, nodeNumber, errorLog) {
                 else if (nodeNumber == 2) {
                     if (current.year < 1980 && current.status == COMMITTED) {
                         if (current.type == UPDATE) {
-                            updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                            recoveryUpdate(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                         }
                         else if (current.type == INSERT) {
                             recoveryInsert(pool, current.name, current.year, current.rank);
@@ -226,7 +264,7 @@ function recover(pool, nodeNumber, errorLog) {
                 else if (nodeNumber == 3) {
                     if (current.year >= 1980 && current.status == COMMITTED) {
                         if (current.type == UPDATE) {
-                            updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                            recoveryUpdate(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
                         }
                         else if (current.type == INSERT) {
                             recoveryInsert(pool, current.name, current.year, current.rank);
