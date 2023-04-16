@@ -407,7 +407,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
             if (error) return reject(error);
 
             connection.execute("SET AUTOCOMMIT=0");
-            connection.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
             connection.beginTransaction(function (error) {
                 if (error) {
                     connection.rollback();
@@ -505,7 +505,7 @@ searchById = (pool, isolationLevel, id) => {
     return new Promise((resolve, reject) => {
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
-            connection.query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+            connection.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
             connection.beginTransaction(function (error) {
                 if (error) {
                     connection.rollback();
