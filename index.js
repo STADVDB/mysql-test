@@ -475,11 +475,8 @@ app.get('/update', async function (req, res) {
     }   
 
     try {
-        await updateMovie(pool, isolationLevel, id, name, year, rank);
+        updateMovie(pool, isolationLevel, id, name, year, rank);
         console.log("Updated " + id + " at node " + getPoolNumber(pool));
-        await updateMovie(replica, isolationLevel, id, name, year, rank);
-        console.log("Updated movie " + id + " at node " + getPoolNumber(replica));
-        res.redirect('/');
     }
     catch (error) {
         log(errorPath, new Error(getPoolNumber(pool), REPLICATION, UNRESOLVED));
@@ -488,11 +485,8 @@ app.get('/update', async function (req, res) {
     }
 
     try {
-        await updateMovie(replica, isolationLevel, id, name, year, rank);
+        updateMovie(replica, isolationLevel, id, name, year, rank);
         console.log("Updated movie " + id + " at node " + getPoolNumber(replica));
-        await updateMovie(pool, isolationLevel, id, name, year, rank);
-        console.log("Updated " + id + " at node " + getPoolNumber(pool));
-        res.redirect('/');
     }
     catch (error) {
         log(errorPath, new Error(getPoolNumber(replica), REPLICATION, UNRESOLVED));
