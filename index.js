@@ -472,7 +472,7 @@ app.get('/update', async function (req, res) {
     }   
 
     try {
-        updateMovie(pool, isolationLevel, id, name, year, rank);
+        await updateMovie(pool, isolationLevel, id, name, year, rank);
         console.log("Updated " + id + " at node " + getPoolNumber(pool));
     }
     catch (error) {
@@ -482,7 +482,7 @@ app.get('/update', async function (req, res) {
     }
 
     try {
-        updateMovie(replica, isolationLevel, id, name, year, rank);
+        await updateMovie(replica, isolationLevel, id, name, year, rank);
         console.log("Updated movie " + id + " at node " + getPoolNumber(replica));
     }
     catch (error) {
