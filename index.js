@@ -205,9 +205,8 @@ function isTargetNode(nodeNumber, errorType, currentNode) {
 // wait()
 
 recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
-    // var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
-    //     "id = ?;";
-    var query = "asdf"; 
+    var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
+        "id = ?;";
 
     const NODE = getPoolNumber(pool);
     var newLog = new Update(NODE, id, name, year, rank, ABORTED);
@@ -474,7 +473,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                 //     wait();
                 // }
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
-                connection.execute(query, [name, year, rank, id], function (error, results) {
+                connection.execute("query", [name, year, rank, id], function (error, results) {
                     if (error) {
                         connection.rollback();
                         log(historyPath, newLog);
