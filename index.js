@@ -406,13 +406,13 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
 
-            connection.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
-            connection.execute("SET AUTOCOMMIT=0");
             connection.beginTransaction(function (error) {
                 if (error) {
                     connection.rollback();
                     return reject(error);
                 }
+                connection.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
+                connection.execute("SET AUTOCOMMIT=0");
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
                 connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
