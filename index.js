@@ -225,12 +225,27 @@ app.get('/insert', async function (req, res) {
         rank = null;
 
     try {
-        await insertMovie(pool1, isolationLevel, name, year, rank);
-        console.log("Inserted new movie at master node");
         await insertMovie(pool, isolationLevel, name, year, rank);
-        res.redirect("/")
-    } catch (error) {
+        console.log("Inserted new movie at node " + getPoolNumber(pool)); 
+        res.redirect('/');
+    }
+    catch(error) {
+        log(errorPath, new Error(getPoolNumber(pool), UNRESOLVED));
+        console.log("Could not add new movie at node " + getPoolNumber(pool)); 
         console.log(error);
+        res.redirect('/');
+    }
+
+    try {
+        await insertMovie(pool1, isolationLevel, name, year, rank);
+        console.log("Inserted new movie at node " + 1);
+        res.redirect('/');
+    }
+    catch(error) {
+        log(errorPath, new Error(1, UNRESOLVED));
+        console.log("Could not add new movie to node " + 1); 
+        console.log(error);
+        res.redirect('/');
     }
 })
 
@@ -286,13 +301,27 @@ app.get('/update', async function (req, res) {
         rank = null;
 
     try {
-        await updateMovie(pool1, isolationLevel, id, name, year, rank);
-        console.log("Updated master node");
         await updateMovie(pool, isolationLevel, id, name, year, rank);
-        res.redirect("/")
-    } catch (error) {
+        console.log("Updated " + id + " at node " + getPoolNumber(pool));
+    }
+    catch (error) {
+        log(errorPath, new Error(getPoolNumber(pool), UNRESOLVED));
+        console.log("Could not update movie " + id + " at node " + getPoolNumber(pool));
         console.log(error);
     }
+
+    try {
+        await updateMovie(pool1, isolationLevel, id, name, year, rank);
+        console.log("Updated movie " + id + " at node " + 1);
+        res.redirect('/');
+    }
+    catch (error) {
+        log(errorPath, new Error(1, UNRESOLVED));
+        console.log("Could not update movie " + id + " at node " + 1);
+        console.log(error);
+        res.redirect('/');
+    }
+
 });
 
 // TODO: add locking stuff and recovery stuff
@@ -330,12 +359,12 @@ app.get('/search', async function (req, res) {
 
     try {
         const result = await searchById(pool, isolationLevel, id);
-        res.render('index', { tuple: result });
+        res.render('index', { tuple: result, pool: req.query.pool });
     } catch (error) {
         console.log(error);
         console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1"); 
         const result = await searchById(pool1, isolationLevel, id);
-        res.render('index', { tuple: result });
+        res.render('index', { tuple: result, pool: req.query.pool });
     }
 });
 
