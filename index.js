@@ -100,16 +100,23 @@ function Insert(node, name, year, rank, status) {
 }
 
 async function log(path, log) {
-    fs.readFile(path, function (error, data) {
+    fs.readFile(path, async function (error, data) {
         if (error) console.log(error);
 
-        var jsonContent = JSON.parse(data);
-        jsonContent.push(log);
-        var jsonString = JSON.stringify(jsonContent);
-        fs.writeFile(path, jsonString, function (error) {
-            if (error) console.log(error);
-        });
-        console.log('The new item was appended to the JSON array!');
+        try {
+            var jsonContent = await JSON.parse(data);
+            await jsonContent.push(log);
+            var jsonString = JSON.stringify(jsonContent);
+            fs.writeFile(path, jsonString, function (error) {
+                if (error) {
+                    console.log(error);
+                    console.log("error writing " + jsonContent);
+                }
+            });
+            console.log('The new item was appended to ' + path);
+        } catch (error) {
+            console.log(error);
+        }
     });
 }
 
@@ -126,19 +133,26 @@ async function setResolved(index) {
     })
 }
 
-// async function checkConnection(pool, input) {
-//     await pool.getConnection(async function (error, connection) {
-//         if (error) {
-//             console.log(error);
-//             return false;
-//         }
-//         else {
-//             console.log("Connection successful to node " + input);
-//             connection.release();
-//             return true;
-//         }
-//     });
-// }
+fs.watch(errorPath, (eventType, filename) => {
+    // Check if the event is a change to the file
+    if (eventType === 'change') {
+        // Read the JSON file
+        fs.readFileSync(errorPath, async function (error, data) {
+            if (error) console.log(error);
+
+            var parsed = await JSON.parse(data);
+            await parsed.push(log);
+
+            var recentLog = parsed[parsed.length - 1];
+
+            // Check if the status attribute is "UNRESOLVED"
+            if (recentLog.status === UNRESOLVED) {
+                console.log('Status is UNRESOLVED!');
+                // Do something here, such as send an email notification or trigger another action
+            }
+        });
+    }
+});
 
 async function getPool(input) {
     var pool;
@@ -153,7 +167,7 @@ async function getPool(input) {
         pool = pool1;
     }
 
-    return pool; 
+    return pool;
 
 }
 
@@ -226,12 +240,12 @@ app.get('/insert', async function (req, res) {
 
     try {
         await insertMovie(pool, isolationLevel, name, year, rank);
-        console.log("Inserted new movie at node " + getPoolNumber(pool)); 
+        console.log("Inserted new movie at node " + getPoolNumber(pool));
         res.redirect('/');
     }
-    catch(error) {
-        log(errorPath, new Error(getPoolNumber(pool), UNRESOLVED));
-        console.log("Could not add new movie at node " + getPoolNumber(pool)); 
+    catch (error) {
+        await log(errorPath, new Error(await getPoolNumber(pool), UNRESOLVED));
+        console.log("Could not add new movie at node " + getPoolNumber(pool));
         console.log(error);
         res.redirect('/');
     }
@@ -241,9 +255,9 @@ app.get('/insert', async function (req, res) {
         console.log("Inserted new movie at node " + 1);
         res.redirect('/');
     }
-    catch(error) {
-        log(errorPath, new Error(1, UNRESOLVED));
-        console.log("Could not add new movie to node " + 1); 
+    catch (error) {
+        await log(errorPath, new Error(1, UNRESOLVED));
+        console.log("Could not add new movie to node " + 1);
         console.log(error);
         res.redirect('/');
     }
@@ -362,7 +376,7 @@ app.get('/search', async function (req, res) {
         res.render('index', { tuple: result, pool: req.query.pool });
     } catch (error) {
         console.log(error);
-        console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1"); 
+        console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1");
         const result = await searchById(pool1, isolationLevel, id);
         res.render('index', { tuple: result, pool: req.query.pool });
     }
