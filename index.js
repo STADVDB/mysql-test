@@ -19,24 +19,24 @@ const mysql = require('mysql2');
 const heartbeats = require('heartbeats');
 
 const con1Config = {
-    host: 'ccscloud3.dlsu.edu.ph',
-    port: '39000',
+    host: '172.16.13.100',
+    port: '3306',
     user: 'dev',
     password: '12341234',
     database: 'imdb'
 }
 
 const con2Config = {
-    host: 'ccscloud3.dlsu.edu.ph',
-    port: '39001',
+    host: '172.16.13.101',
+    port: '3306',
     user: 'dev',
     password: '12341234',
     database: 'imdb'
 }
 
 const con3Config = {
-    host: 'ccscloud3.dlsu.edu.ph',
-    port: '39002',
+    host: '172.16.13.102',
+    port: '3306',
     user: 'dev',
     password: '12341234',
     database: 'imdb'
