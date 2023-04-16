@@ -86,7 +86,7 @@
                 <td>
                     <input name="rank" type="text" placeholder="Type Movie Rank here">  
                 </td>
-                <input name="isolationLevel" value="SERIALIZABLE" type="hidden">
+                <input name="isolationLevel" value="{{isolationLevel}}" type="hidden">
             </tr>
             <tr>                    
                 <td colspan="2">
@@ -119,14 +119,14 @@
                 <td>
                     <input name="rank" type="text" value="{{this.rank}}" placeholder="Type Movie Rank here">	
                 </td>
-            </tr>
-            <input name="isolationLevel" value="SERIALIZABLE" type="hidden">     
+            </tr>   
             <tr>                  
                 <td colspan="2">
                     <input type="submit" value="Update"></button>
                 </td>
             </tr>
             {{/each}}
+            <input name="isolationLevel" value="{{isolationLevel}}" type="hidden">
         </table>
         <input type="hidden" name="pool" value="{{pool}}">
     </form>

@@ -530,7 +530,7 @@ app.get('/search', async function (req, res) {
     if(req.query.pool == 1) {
         try {
             const result = await searchById(pool1, isolationLevel, id); 
-            res.render('index', { tuple: result, pool: req.query.pool}); 
+            res.render('index', { tuple: result, pool: req.query.pool, level: req.query.isolationLevel}); 
         }
         catch(error) {
             // if node 1 is down try searching the other nodes 
@@ -540,7 +540,7 @@ app.get('/search', async function (req, res) {
                 if(data.length == 0) {
                     try {
                         const result2 = await searchById(pool2, isolationLevel, id);
-                        res.render('index', {tuple: result2, pool: req.query.pool}); 
+                        res.render('index', { tuple: result2, pool: req.query.pool, level: req.query.isolationLevel }); 
                     }
                     catch(error) {
                         console.log(error); 
@@ -548,7 +548,7 @@ app.get('/search', async function (req, res) {
                     }
                 }
                 else {
-                    res.render('index', {tuple: data, pool: req.query.pool});
+                    res.render('index', { tuple: data, pool: req.query.pool, level: req.query.isolationLevel });
                 }
             });
         }
@@ -556,12 +556,12 @@ app.get('/search', async function (req, res) {
     else {
         try {
             const result = await searchById(pool, isolationLevel, id);
-            res.render('index', { tuple: result, pool: req.query.pool });
+            res.render('index', { tuple: result, pool: req.query.pool, level: req.query.isolationLevel });
         } catch (error) {
             console.log(error);
             console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1");
             const result = await searchById(pool1, isolationLevel, id);
-            res.render('index', { tuple: result, pool: req.query.pool });
+            res.render('index', { tuple: result, pool: req.query.pool, level: req.query.isolationLevel });
         }
     }
 });
