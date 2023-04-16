@@ -2,7 +2,7 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 
 const app = express();
-const port = 80;
+const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })) // might change later
@@ -20,7 +20,7 @@ const heartbeats = require('heartbeats');
 
 const con1Config = {
     host: '172.16.3.100',
-    port: 3306,
+    port: '3306',
     user: 'dev',
     password: '12341234',
     database: 'imdb'
