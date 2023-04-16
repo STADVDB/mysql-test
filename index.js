@@ -2,7 +2,7 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 
 const app = express();
-const port = 80;
+const port = 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })) // might change later
