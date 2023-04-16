@@ -72,17 +72,23 @@ const UNRESOLVED = 'UNRESOLVED';
 const RESOLVED = 'RESOLVED';
 const COMMITTED = 'COMMITTED';
 const ABORTED = 'ABORTED';
+const UPDATE = 'UPDATE';
+const INSERT = 'INSERT';
+const REPLICATION = 'REPLICATION';
+const TRANSACTION = 'TRANSACTION';
 
 date = new Date();
 
-function Error(node, status) {
+function Error(node, type, status) {
     this.date = date;
     this.node = node;
+    this.type = type; 
     this.status = status;
 }
 
 function Update(node, id, name, year, rank, status) {
     this.node = node;
+    this.type = UPDATE
     this.date = date;
     this.id = id;
     this.name = name;
@@ -91,8 +97,9 @@ function Update(node, id, name, year, rank, status) {
     this.status = status;
 }
 
-function Insert(node, name, year, rank, status) {
+function Insert(node, id, name, year, rank, status) {
     this.node = node;
+    this.type = INSERT; 
     this.date = date;
     this.name = name;
     this.year = year;
@@ -126,7 +133,7 @@ async function setResolved(index) {
         if (error) console.log(error);
 
         var jsonContent = JSON.parse(data);
-        jsonContent[index].status = "RESOLVED";
+        jsonContent[index].status = RESOLVED;
         var jsonString = JSON.stringify(jsonContent);
         fs.writeFile(errorPath, jsonString, function (error) {
             if (error) console.log(error);
@@ -136,23 +143,23 @@ async function setResolved(index) {
 
 fs.watchFile(errorPath, { persistent: true, interval: 500 }, (curr, prev) => {
     fs.readFile(errorPath, (err, data) => {
-        if (err) throw err;
+        if (err) console.log(err);
 
         const parsed = JSON.parse(data);
         const index = parsed.length - 1; 
         const recentLog = parsed[index];
 
-        if (recentLog.status === 'UNRESOLVED') {
+        if (recentLog.status === UNRESOLVED) {
             console.log("Unresolved error found, starting pulse");
-            createPulse(getPool(recentLog.node), recentLog.node);
+            createPulse(getPool(recentLog.node), recentLog.node, index, recentLog);
         }
     });
 });
 
 var heart = heartbeats.createHeart(5000); // heart that check server every 5 seconds
 
-createPulse = (pool, nodeNumber) => {
-    heart.createEvent(1, function (count, last) {
+createPulse = (pool, nodeNumber, index, errorLog) => {
+    const event = heart.createEvent(1, function (count, last) {
 
         pool.getConnection(function (error, connection) {
             if (error) {
@@ -160,10 +167,121 @@ createPulse = (pool, nodeNumber) => {
             }
             else {
                 console.log('Reconnected to node ' + nodeNumber);
+                recover(pool, nodeNumber, errorLog)
                 connection.release();
+                setResolved(index);
+                event.kill();
             }
         });
     });
+}
+
+function isTargetNode(nodeNumber, errorType, currentNode) {
+    if(errorType == TRANSACTION) {
+        if(nodeNumber == currentNode) {
+            return true; 
+        } 
+        return false; 
+    }
+    else {
+        if(nodeNumber == 1 && (currentNode == 2 || currentNode == 3)) {
+            return true; 
+        }
+        else if((nodeNumber == 2 || nodeNumber == 3) && currentNode == 1) {
+            return true; 
+        }
+        return false; 
+    }
+}
+
+recover = (pool, nodeNumber, errorLog) => {
+    fs.readFile(historyPath, async (error, data) => {
+        if(error) console.log(error); 
+
+        var parsed = JSON.parse(data);
+        var errorType = errorLog.type; 
+        // var checkpoint = errorLog.date; 
+
+        for(i = 0; i < parsed.length; i++) {
+            current = parsed[i]; 
+            if (isTargetNode(nodeNumber, errorType, current.node)) {
+                if (nodeNumber == 1 && current.status == COMMITTED) {
+                    if (current.type == UPDATE) {
+                        await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                    }
+                    else if (current.type == INSERT) {
+                        await recoveryInsert(pool, current.name, current.year, current.rank);
+                    }
+                }
+                else if (nodeNumber == 2) {
+                    if (current.year < 1980 && current.status == COMMITTED) {
+                        if (current.type == UPDATE) {
+                            await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                        }
+                        else if (current.type == INSERT) {
+                            await recoveryInsert(pool, current.name, current.year, current.rank);
+                        }
+                    }
+                }
+                else if (nodeNumber == 3) {
+                    if (current.year >= 1980 && current.status == COMMITTED) {
+                        if (current.type == UPDATE) {
+                            await updateMovie(pool, 'SERIALIZABLE', current.id, current.name, current.year, current.rank);
+                        }
+                        else if (current.type == INSERT) {
+                            await recoveryInsert(pool, current.name, current.year, current.rank);
+                        }
+                    }
+                }
+            }
+            
+        }
+    })
+}
+
+recoveryInsert = (pool, name, year, rank) => {
+    result = searchByName(pool, name)
+    result.then((data) => {
+        if(data.length == 0) {
+            insertMovie(pool, 'SERIALIZABLE', name, year, rank); 
+        }
+        else {
+            fromDB = data[0].name + data[0].year + data[0].rank;
+            fromLogs = name + year + rank; 
+            if(fromDB != fromLogs) {
+                insertMovie(pool, 'SERIALIZABLE', name, year, rank); 
+            }
+            else {
+                console.log("Insert not needed"); // for test only, delete this clause after
+            }
+        }
+    })
+}
+
+// insertMovie = (pool, isolationLevel, name, year, rank) => {
+
+searchByName = (pool, name) => {
+    query = "SELECT * FROM movies WHERE name LIKE ? LIMIT 1;"; 
+
+    return new Promise((resolve, reject) => {
+        pool.getConnection(function (error, connection) {
+            if (error) return reject(error);
+            connection.beginTransaction(function (error) {
+                if (error) {
+                    connection.rollback();
+                    return reject(error);
+                }
+                connection.execute(query, [name], function (error, results) {
+                    if (error) return reject(error);
+
+                    console.log(results);
+                    connection.rollback();
+                    return resolve(results);
+                });
+            });
+            pool.releaseConnection(connection);
+        });
+    })
 }
 
 function getPool(input) {
@@ -225,7 +343,7 @@ insertMovie = (pool, isolationLevel, name, year, rank) => {
                     if (error) {
                         connection.rollback();
                         log(historyPath, newLog);
-                        log(errorPath, new Error(NODE, UNRESOLVED));
+                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
                         return reject(error);
                     }
                     newLog.status = COMMITTED;
@@ -253,13 +371,11 @@ app.get('/insert', async function (req, res) {
     try {
         await insertMovie(pool, isolationLevel, name, year, rank);
         console.log("Inserted new movie at node " + getPoolNumber(pool));
-        res.redirect('/');
     }
     catch (error) {
-        await log(errorPath, new Error(await getPoolNumber(pool), UNRESOLVED));
+        await log(errorPath, new Error(await getPoolNumber(pool), REPLICATION, UNRESOLVED));
         console.log("Could not add new movie at node " + getPoolNumber(pool));
         console.log(error);
-        res.redirect('/');
     }
 
     try {
@@ -268,7 +384,7 @@ app.get('/insert', async function (req, res) {
         res.redirect('/');
     }
     catch (error) {
-        await log(errorPath, new Error(1, UNRESOLVED));
+        await log(errorPath, new Error(1, REPLICATION, UNRESOLVED));
         console.log("Could not add new movie to node " + 1);
         console.log(error);
         res.redirect('/');
@@ -300,7 +416,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     if (error) {
                         connection.rollback();
                         log(historyPath, newLog);
-                        log(errorPath, new Error(NODE, UNRESOLVED));
+                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
                         return reject(error);
                     }
                     newLog.status = COMMITTED;
@@ -331,7 +447,7 @@ app.get('/update', async function (req, res) {
         console.log("Updated " + id + " at node " + getPoolNumber(pool));
     }
     catch (error) {
-        log(errorPath, new Error(getPoolNumber(pool), UNRESOLVED));
+        log(errorPath, new Error(getPoolNumber(pool), REPLICATION, UNRESOLVED));
         console.log("Could not update movie " + id + " at node " + getPoolNumber(pool));
         console.log(error);
     }
@@ -342,7 +458,7 @@ app.get('/update', async function (req, res) {
         res.redirect('/');
     }
     catch (error) {
-        log(errorPath, new Error(1, UNRESOLVED));
+        log(errorPath, new Error(1, REPLICATION, UNRESOLVED));
         console.log("Could not update movie " + id + " at node " + 1);
         console.log(error);
         res.redirect('/');
