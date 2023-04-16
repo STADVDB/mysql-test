@@ -431,6 +431,20 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
     });
 }
 
+function getReplica(pool, year) {
+    if(pool == pool1) {
+        if (year >= 1980) {
+            return pool3;
+        }
+        else {
+            return pool2;
+        }
+    }
+    else {
+        return pool1
+    }
+}
+
 app.get('/update', async function (req, res) {
     var id = req.query.id;
     var isolationLevel = req.query.isolationLevel;
@@ -438,9 +452,11 @@ app.get('/update', async function (req, res) {
     var name = req.query.name;
     var year = req.query.year;
     var rank = req.query.rank;
+    var replica = getReplica(pool, year);
 
-    if (rank == "")
+    if(rank == "") {
         rank = null;
+    }   
 
     try {
         await updateMovie(pool, isolationLevel, id, name, year, rank);
@@ -453,13 +469,13 @@ app.get('/update', async function (req, res) {
     }
 
     try {
-        await updateMovie(pool1, isolationLevel, id, name, year, rank);
-        console.log("Updated movie " + id + " at node " + 1);
+        await updateMovie(replica, isolationLevel, id, name, year, rank);
+        console.log("Updated movie " + id + " at node " + getPoolNumber(replica));
         res.redirect('/');
     }
     catch (error) {
         log(errorPath, new Error(1, REPLICATION, UNRESOLVED));
-        console.log("Could not update movie " + id + " at node " + 1);
+        console.log("Could not update movie " + id + " at node " + getPoolNumber(replica));
         console.log(error);
         res.redirect('/');
     }
@@ -499,14 +515,42 @@ app.get('/search', async function (req, res) {
     var isolationLevel = req.query.isolationLevel;
     var pool = getPool(req.query.pool);
 
-    try {
-        const result = await searchById(pool, isolationLevel, id);
-        res.render('index', { tuple: result, pool: req.query.pool });
-    } catch (error) {
-        console.log(error);
-        console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1");
-        const result = await searchById(pool1, isolationLevel, id);
-        res.render('index', { tuple: result, pool: req.query.pool });
+    if(req.query.pool == 1) {
+        try {
+            const result = await searchById(pool1, isolationLevel, id); 
+            res.render('index', { tuple: result, pool: req.query.pool}); 
+        }
+        catch(error) {
+            // if node 1 is down try searching the other nodes 
+            console.log("could not connect to node 1 trying other nodes")
+            result = searchById(pool3, isolationLevel, id); 
+            result.then(async (data) => {
+                if(data.length == 0) {
+                    try {
+                        const result2 = await searchById(pool2, isolationLevel, id);
+                        res.render('index', {tuple: result2, pool: req.query.pool}); 
+                    }
+                    catch(error) {
+                        console.log(error); 
+                        res.redirect('/');
+                    }
+                }
+                else {
+                    res.render('index', {tuple: data, pool: req.query.pool});
+                }
+            });
+        }
+    }
+    else {
+        try {
+            const result = await searchById(pool, isolationLevel, id);
+            res.render('index', { tuple: result, pool: req.query.pool });
+        } catch (error) {
+            console.log(error);
+            console.log("Could not connect to Node " + req.query.pool + ", trying connection with Node 1");
+            const result = await searchById(pool1, isolationLevel, id);
+            res.render('index', { tuple: result, pool: req.query.pool });
+        }
     }
 });
 
@@ -524,14 +568,6 @@ getList = () => {
 }
 
 app.get('/', async function (req, res) {
-    // try {
-    //     const results = await getList();
-    //     res.render('index', { tuple: results });
-    // }
-    // catch (error) {
-    //     console.log(error);
-    // }
-
     res.render('index');
 });
 
