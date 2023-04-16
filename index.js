@@ -391,13 +391,7 @@ app.get('/insert', async function (req, res) {
     }
 })
 
-async function wait() {
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-    await sleep(15000) // await needs to be inside an async function
-    // code after await and INSIDE THE FUNCTION is executed after the wait time
-    // TODO: insert code to do after below
-    console.log("After 15 seconds")
-}
+
 
 // TODO: add recovery stuff
 updateMovie = (pool, isolationLevel, id, name, year, rank) => {
@@ -430,11 +424,17 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
                     if(pool == pool1) {
-                        console.log("starting wait");
+                        async function wait() {
+                            const sleep = ms => new Promise(r => setTimeout(r, ms));
+                            await sleep(15000) // await needs to be inside an async function
+                            // code after await and INSIDE THE FUNCTION is executed after the wait time
+                            // TODO: insert code to do after below
+                            console.log("After 15 seconds")
+                            connection.execute("COMMIT;");
+                            return resolve();
+                        }
                         wait();
                     }
-                    connection.execute("COMMIT;");
-                    return resolve();
                 });
             });
             console.log("Connection released");
