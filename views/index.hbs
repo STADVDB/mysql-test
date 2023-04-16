@@ -85,14 +85,7 @@
                 <td>
                     <input name="rank" type="text" placeholder="Type Movie Rank here">  
                 </td>
-                <td>
-                    <select name="isolationLevel" class="dropdown">
-                        <option value="READ UNCOMMITTED">Read Uncommitted</option>
-                        <option value="READ COMMITTED">Read Committed</option>
-                        <option value="REPEATABLE READ">Repeatable Reads</option>
-                        <option value="SERIALIZABLE">Serializable</option>
-                    </select>	
-                </td>                    
+                <input name="isolationLevel" value="SERIALIZABLE" type="hidden">
             </tr>
             <tr>                    
                 <td colspan="2">
@@ -126,16 +119,7 @@
                     <input name="rank" type="text" value="{{this.rank}}" placeholder="Type Movie Rank here">	
                 </td>
             </tr>
-            <tr>
-                <td colspan="2">
-                    <select name="isolationLevel" class="isolation-dropdown">
-                        <option value="READ UNCOMMITTED">Read Uncommitted</option>
-                        <option value="READ COMMITTED">Read Committed</option>
-                        <option value="REPEATABLE READ">Repeatable Reads</option>
-                        <option value="SERIALIZABLE">Serializable</option>
-                    </select>                        
-                </td>                    
-            </tr>
+            <input name="isolationLevel" value="SERIALIZABLE" type="hidden">     
             <tr>                  
                 <td colspan="2">
                     <input type="submit" value="Update"></button>
