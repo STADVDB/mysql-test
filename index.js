@@ -406,7 +406,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
 
-            connection.execute("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
             connection.execute("SET AUTOCOMMIT=0");
             connection.beginTransaction(function (error) {
                 if (error) {
@@ -423,6 +423,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     }
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
+                    connection.execute("COMMIT;");
                     if(pool == pool1) {
                         async function wait() {
                             const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -430,11 +431,10 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                             // code after await and INSIDE THE FUNCTION is executed after the wait time
                             // TODO: insert code to do after below
                             console.log("After 15 seconds")
-                            connection.execute("COMMIT;");
-                            return resolve();
                         }
                         wait();
                     }
+                    return resolve();
                 });
             });
             console.log("Connection released");
@@ -501,7 +501,7 @@ searchById = (pool, isolationLevel, id) => {
     return new Promise((resolve, reject) => {
         pool.getConnection(function (error, connection) {
             if (error) return reject(error);
-            connection.query("SET TRANSACTION ISOLATION LEVEL " + isolationLevel);
+            connection.query("SET TRANSACTION ISOLATION LEVEL READ COMMITTED");
             connection.beginTransaction(function (error) {
                 if (error) {
                     connection.rollback();
