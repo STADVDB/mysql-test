@@ -320,6 +320,14 @@ getPoolNumber = (pool) => {
     }
 }
 
+async function wait() {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    await sleep(10000) // await needs to be inside an async function
+    // code after await and INSIDE THE FUNCTION is executed after the wait time
+    // TODO: insert code to do after below
+    console.log("After 10 seconds")
+}
+
 insertMovie = (pool, isolationLevel, name, year, rank) => {
     var query = "INSERT INTO movies (name, year, `rank`) " +
         "VALUES (?, ?, ?);";
@@ -348,6 +356,7 @@ insertMovie = (pool, isolationLevel, name, year, rank) => {
                     }
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
+                    wait();
                     connection.execute("COMMIT;");
                     return resolve();
                 });
@@ -421,6 +430,7 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     }
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
+                    wait();
                     connection.execute("COMMIT;");
                     return resolve();
                 });
