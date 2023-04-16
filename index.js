@@ -21,24 +21,24 @@ const heartbeats = require('heartbeats');
 const con1Config = {
     host: '172.16.13.100',
     port: 3306,
-    user: 'dev',
-    password: '12341234',
+    user: 'root',
+    password: '1234',
     database: 'imdb'
 }
 
 const con2Config = {
     host: '172.16.13.101',
     port: '3306',
-    user: 'dev',
-    password: '12341234',
+    user: 'root',
+    password: '1234',
     database: 'imdb'
 }
 
 const con3Config = {
     host: '172.16.13.102',
     port: '3306',
-    user: 'dev',
-    password: '12341234',
+    user: 'root',
+    password: 'password',
     database: 'imdb'
 }
 
