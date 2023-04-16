@@ -194,16 +194,6 @@ function isTargetNode(nodeNumber, errorType, currentNode) {
     }
 } 
 
-// async function wait() {
-//     const sleep = ms => new Promise(r => setTimeout(r, ms));
-//     await sleep(5000) // await needs to be inside an async function
-//     // code after await and INSIDE THE FUNCTION is executed after the wait time
-//     // TODO: insert code to do after below
-//     console.log("After 5 seconds")
-// }
-
-// wait()
-
 recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
     var query = "UPDATE movies SET name = ?, year = ?, `rank` = ? WHERE " +
         "id = ?;";
@@ -300,13 +290,12 @@ recoveryInsert = (pool, name, year, rank) => {
                 insertMovie(pool, 'SERIALIZABLE', name, year, rank);
             }
             else {
-                console.log("Insert not needed"); // for test only, delete this clause after
+                console.log("Insert not needed");
             }
         }
     })
 }
 
-// insertMovie = (pool, isolationLevel, name, year, rank) => {
 
 searchByName = (pool, name) => {
     query = "SELECT * FROM movies WHERE name LIKE ? LIMIT 1;";
@@ -461,17 +450,6 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     connection.rollback();
                     return reject(error);
                 }
-                // if (pool == pool1) {
-                //     async function wait() {
-                //         const sleep = ms => new Promise(r => setTimeout(r, ms));
-                //         await sleep(15000) // await needs to be inside an async function
-                //         // code after await and INSIDE THE FUNCTION is executed after the wait time
-                //         // TODO: insert code to do after below
-                //         console.log("After 15 seconds");
-                //     }
-                //     console.log("STARING WAIT")
-                //     wait();
-                // }
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
                 connection.execute(query, [name, year, rank, id], function (error, results) {
                     if (error) {
