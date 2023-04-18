@@ -500,7 +500,6 @@ app.get('/update', async function (req, res) {
     try {
         await updateMovie(pool, isolationLevel, id, name, year, rank);
         console.log("Updated " + id + " at node " + getPoolNumber(pool));
-        res.redirect('/');
     }
     catch (error) {
         log(errorPath, new Error(getPoolNumber(pool), REPLICATION, UNRESOLVED));
