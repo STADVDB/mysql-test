@@ -462,32 +462,34 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                     connection.rollback();
                     return reject(error);
                 }
+
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
-                connection.execute(query, [name, year, rank, id], function (error, results) {
-                    if (error) {
-                        connection.rollback();
+
+                async function wait() {
+                    const sleep = ms => new Promise(r => setTimeout(r, ms));
+                    await sleep(10000) // await needs to be inside an async function
+                    // code after await and INSIDE THE FUNCTION is executed after the wait time
+                    // TODO: insert code to do after below
+                    connection.execute(query, [name, year, rank, id], function (error, results) {
+                        if (error) {
+                            connection.rollback();
+                            log(historyPath, newLog);
+                            log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
+                            return reject(error);
+                        }
+                        newLog.status = COMMITTED;
                         log(historyPath, newLog);
-                        log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
-                        return reject(error);
-                    }
-                    newLog.status = COMMITTED;
-                    log(historyPath, newLog);
 
-                    console.log("Start of delay")
-
-                    async function wait() {
-                        const sleep = ms => new Promise(r => setTimeout(r, ms));
-                        await sleep(10000) // await needs to be inside an async function
-                        // code after await and INSIDE THE FUNCTION is executed after the wait time
-                        // TODO: insert code to do after below
+                        console.log("Start of delay")
                         connection.execute("COMMIT;");
-                        console.log("After 10 seconds")
                         return resolve();
-                    }
+                    });
+                    console.log("After 10 seconds")
+                }
 
-                    wait(); 
+                wait(); 
 
-                });
+                
             });
             console.log("Connection released");
             pool.releaseConnection(connection);
