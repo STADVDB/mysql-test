@@ -223,6 +223,7 @@ recoveryUpdate = (pool, isolationLevel, id, name, year, rank) => {
                     newLog.status = COMMITTED;
                     log(historyPath, newLog);
 
+                    console.log("Delay started");
                     async function wait() {
                         const sleep = ms => new Promise(r => setTimeout(r, ms));
                         await sleep(10000) // await needs to be inside an async function
