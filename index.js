@@ -460,11 +460,14 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
             connection.beginTransaction(function (error) {
                 if (error) {
                     connection.rollback();
+                    log(historyPath, newLog);
+                    log(errorPath, new Error(NODE, TRANSACTION, UNRESOLVED));
                     return reject(error);
                 }
 
                 connection.execute("SELECT * FROM movies WHERE id = ? FOR UPDATE;", [id]);
 
+                console.log("Start of delay")
                 async function wait() {
                     const sleep = ms => new Promise(r => setTimeout(r, ms));
                     await sleep(10000) // await needs to be inside an async function
@@ -480,7 +483,6 @@ updateMovie = (pool, isolationLevel, id, name, year, rank) => {
                         newLog.status = COMMITTED;
                         log(historyPath, newLog);
 
-                        console.log("Start of delay")
                         connection.execute("COMMIT;");
                         return resolve();
                     });
